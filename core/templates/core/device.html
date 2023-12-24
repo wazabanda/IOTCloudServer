@@ -1,0 +1,188 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<h4 class="mb-4 text-4l font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl ">{{device}} Readings</h4>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div id="chart_container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+
+
+</div>
+  
+
+<div id="buttons">
+{%for pin in gpiopins%}
+<div>
+  <p>{{pin.name}} {{pin.pin}}</p>
+  <button onclick="sendGpioMessage({{pin.pin}})">Toggle</button>
+</div>
+{%endfor%}
+</div>
+  
+  <script>
+    const ctx = document.getElementById('myChart');
+    // const labels = Utils.months({count: 7});
+
+    // Keep track of existing charts using a Map
+
+// Keep track of existing charts using a Map
+// Keep track of existing charts using a Map
+const chartsMap = new Map();
+const parentDiv = document.getElementById('chart_container');
+async function fetchData() {
+    try {
+        const response = await fetch('/api/numerical-logs/{{device.device_id}}');
+        const data = await response.json();
+
+        // Process the data
+        const groupedData = groupBy(data, 'data_label');
+        const labels = [...new Set(data.map(entry => entry.date_time))];
+
+        // Create or update charts for each data label
+        Object.keys(groupedData).forEach(dataLabel => {
+            let myLineChart = chartsMap.get(dataLabel);
+
+            if (!myLineChart) {
+                // Filter out labels without matching data
+                const filteredLabels = labels.filter(label =>
+                    groupedData[dataLabel].some(entry => entry.date_time === label)
+                );
+
+                // Filter out entries with null values
+                const filteredData = groupedData[dataLabel].filter(entry => entry.value !== null);
+
+                const chartData = {
+                    labels: filteredLabels,
+                    datasets: [{
+                        label: dataLabel,
+                        data: filteredLabels.map(label => {
+                            const entry = filteredData.find(e => e.date_time === label);
+                            return entry ? entry.value : null;
+                        }),
+                        fill: false,
+                        borderColor: getRandomColor(),
+                        tension: 0.1,
+                        pointStyle: false,
+                    }]
+                };
+
+                // Create a canvas element for each chart
+                const canvas = document.createElement('canvas');
+                const div = document.createElement('div')
+                div.appendChild(canvas)
+                div.id = 'myLineChart-${dataLabel}-div'
+                div.classList = 'sm:h-full';
+                canvas.id = `myLineChart-${dataLabel}`;
+                parentDiv.appendChild(div);
+
+                // Create a new Chart.js instance for each canvas
+                const ctx = canvas.getContext('2d');
+                myLineChart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Store the chart in the map
+                chartsMap.set(dataLabel, myLineChart);
+            } else {
+                // Update the existing chart with new data
+                myLineChart.data.labels = labels.filter(label =>
+                    groupedData[dataLabel].some(entry => entry.date_time === label)
+                );
+                myLineChart.data.datasets[0].data = myLineChart.data.labels.map(label => {
+                    const entry = groupedData[dataLabel].find(e => e.date_time === label);
+                    return entry ? entry.value : null;
+                });
+
+                // Update the chart
+                myLineChart.update();
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+
+// Function to group an array of objects by a specific key
+function groupBy(arr, key) {
+    return arr.reduce((acc, obj) => {
+        const groupKey = obj[key];
+        acc[groupKey] = acc[groupKey] || [];
+        acc[groupKey].push(obj);
+        return acc;
+    }, {});
+}
+
+// Function to get a random color
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+
+    // Add alpha (opacity) value, e.g., '80' corresponds to 50% opacity
+    color += '80';
+
+    return color;
+}
+
+
+// ... rest of your code ...
+
+// Fetch data initially
+fetchData();
+
+// Fetch data every minute
+
+
+setInterval(fetchData, 60000/12);
+
+
+    
+  </script>
+
+<button id="sendButton">Send Message</button>
+<div id="serverResponse"></div>
+
+
+<script>
+  // Establishing a WebSocket connection
+  const baseHostUrl =  window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+
+  const socket = new WebSocket(`ws://${baseHostUrl }/ws/devices/{{device.device_id}}`);
+  function sendGpioMessage(pin,state)
+  {
+    const dataToSend = JSON.stringify({message:"Toggle pin",pin:pin,state:state,type:"pin.message"});
+    socket.send(dataToSend);
+  }
+  {% comment %} document.getElementById('sendButton').addEventListener('click', () => {
+        const dataToSend = JSON.stringify({message:`Hello, server! ${new Date()}`, type:"device.message"});
+        socket.send(dataToSend);
+    }); {% endcomment %}
+  // Connection opened
+  socket.addEventListener('open', (event) => {
+      console.log('WebSocket connection opened:', event);
+  });
+
+  // Listen for messages
+  socket.addEventListener('message', (event) => {
+        const serverResponseDiv = document.getElementById('serverResponse');
+        serverResponseDiv.innerHTML = 'Server Response: ' + event.data;
+    });
+
+  // Connection closed
+  socket.addEventListener('close', (event) => {
+      console.log('WebSocket connection closed:', event);
+  });
+</script>
+
+{% endblock content %}
