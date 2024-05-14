@@ -76,3 +76,4 @@ class LocationData(models.Model):
     device = models.ForeignKey(Device, verbose_name=('Device'), on_delete=models.CASCADE)
     lat = models.FloatField("Latitude",default=0)
     lng = models.FloatField("Longtitude",default=0)
+    date_time = models.DateTimeField("Date and time", null=True, default=timezone.now)
