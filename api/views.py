@@ -66,3 +66,34 @@ class AddNumericalLog(APIView):
         print(ser.errors)
         print(ser.error_messages)
         return Response(ser.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+class LocationDataAPI(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request, uuid):
+        try:
+            device = Device.objects.get(device_id=uuid)
+            location_data = LocationData.objects.filter(device=device)
+            serializer = LocationSerilizer(location_data, many=True)
+            return Response(serializer.data)
+        except Device.DoesNotExist:
+            return Response({'Message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'Message': f"Error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, uuid):
+        try:
+            device = Device.objects.get(device_id=uuid)
+            data = request.data
+            data['device'] = device.id
+            serializer = LocationSerilizer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Device.DoesNotExist:
+            return Response({'Message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'Message': f"Error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -60,11 +60,19 @@ class GPIOOutputPin(models.Model):
         
         
     name = models.CharField("Pin Name", max_length=50)
+    # affects_variable = models.BooleanField(default=False)
     pin = models.SmallIntegerField("GPIO pin")
     device = models.ForeignKey(Device, verbose_name="Device", on_delete=models.CASCADE,null=True)
+    
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
         return reverse("GPIOPin_detail", kwargs={"pk": self.pk})
+
+
+class LocationData(models.Model):
+    device = models.ForeignKey(Device, verbose_name=('Device'), on_delete=models.CASCADE)
+    lat = models.FloatField("Latitude",default=0)
+    lng = models.FloatField("Longtitude",default=0)

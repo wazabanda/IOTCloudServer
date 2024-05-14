@@ -17,3 +17,9 @@ class NumericalLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = NumericalLog
         fields = ['device','value','date_time','data_label']
+
+        
+class LocationSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = LocationData
+        fields = '__all__'

@@ -23,3 +23,8 @@ class NumericalLogAdmin(admin.ModelAdmin):
 @admin.register(GPIOOutputPin)
 class GPIOPinAdmin(admin.ModelAdmin):
     list_display = ['name','pin','device']
+    
+
+@admin.register(LocationData)
+class LocationAdmin(admin.ModelAdmin):
+    list_display = ['device','lat','lng']

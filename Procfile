@@ -1,0 +1,1 @@
+web: gunicorn IOTCloudServer.wsgi --log-file -
