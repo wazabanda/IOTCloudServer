@@ -10,7 +10,7 @@ from django.urls import reverse, reverse_lazy as _
 
 
 class ProfileSettings(models.Model):
-    user = models.ForeignKey(User, verbose_name=_("Profile"), on_delete=models.CASCADE)
+    user = models.ForeignKey(User, verbose_name="Profile", on_delete=models.CASCADE)
     google_api_key = models.TextField("Google Maps API Key",null=True)
     mqtt_broker = models.TextField(null=True)
 

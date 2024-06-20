@@ -8,7 +8,6 @@ class DeviceAdmin(admin.ModelAdmin):
     list_display = ['device_name','owner','device_id']
      
 
-
 @admin.register(ApiKey)
 class ApiKeyAdmin(admin.ModelAdmin):
     list_display = ['owner','key']
@@ -28,3 +27,8 @@ class GPIOPinAdmin(admin.ModelAdmin):
 @admin.register(LocationData)
 class LocationAdmin(admin.ModelAdmin):
     list_display = ['device','lat','lng']
+    
+
+@admin.register(ProfileSettings)
+class ProfileSettings(admin.ModelAdmin):
+    list_display=['user']
