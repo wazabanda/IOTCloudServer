@@ -48,7 +48,7 @@ Has loc
   const parentDiv = document.getElementById("chart_container");
   async function fetchData() {
     try {
-      const response = await fetch("/api/numerical-logs/{{device.device_id}}");
+      const response = await fetch("/api/core/numerical-logs/{{device.device_id}}");
       const data = await response.json();
 
       // Process the data
