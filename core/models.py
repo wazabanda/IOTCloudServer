@@ -8,6 +8,12 @@ from django.urls import reverse, reverse_lazy as _
 # Create your models here.
 
 
+
+class ProfileSettings(models.Model):
+    user = models.ForeignKey(User, verbose_name=_("Profile"), on_delete=models.CASCADE)
+    google_api_key = models.TextField("Google Maps API Key",null=True)
+    mqtt_broker = models.TextField(null=True)
+
 class Device(models.Model):      
         
     class Meta:

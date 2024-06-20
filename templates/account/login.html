@@ -1,0 +1,62 @@
+{% extends "account/base_entrance.html" %}
+{% load i18n %}
+{% load static %}
+{% load allauth account %}
+{% block head_title %}
+    {% trans "Sign In" %}
+{% endblock head_title %}
+{% block content %}
+<h1 class="text-3xl font-bold text-center mb-4">{% trans "Sign In" %}</h1>
+{% if not SOCIALACCOUNT_ONLY %}
+    {% setvar link %}
+        <a href="{{ signup_url }}" class="text-blue-500 hover:underline">
+    {% endsetvar %}
+    {% setvar end_link %}
+        </a>
+    {% endsetvar %}
+    <p class="text-center">
+        {% blocktranslate %}If you have not created an account yet, then please {{ link }}sign up{{ end_link }} first.{% endblocktranslate %}
+    </p>
+
+        <form method="post" action="{% url 'account_login' %}" class="max-w-sm mx-auto">
+            {% csrf_token %}
+            <div class="mb-5">
+                <label for="username" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your username</label>
+                <input type="text" id="username" name="login" value="{{ form.login.value }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="username" required />
+                {% if form.login.errors %}
+                    <div class="text-red-500 text-sm">{{ form.login.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="mb-5">
+                <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your password</label>
+                <input type="password" id="password" name="password" value="{{ form.password.value }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+                {% if form.password.errors %}
+                    <div class="text-red-500 text-sm">{{ form.password.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="flex items-start mb-5">
+                <div class="flex items-center h-5">
+                    <input id="remember" name="remember" type="checkbox" value="true" class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800" {% if form.remember.value %}checked{% endif %} />
+                </div>
+                <label for="remember" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Remember me</label>
+            </div>
+            <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Submit</button>
+        </form>
+    {% endif %}
+    {% if LOGIN_BY_CODE_ENABLED %}
+        <hr />
+        <h2>
+            <button onclick="location.href='{{ request_login_code_url }}'" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                {% trans "Mail me a sign-in code" %}
+            </button>
+        </h2>
+    {% endif %}
+    {% if SOCIALACCOUNT_ENABLED %}
+        {% include "socialaccount/snippets/login.html" with page_layout="entrance" %}
+    {% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Flowbit.initialize();
+        });
+    </script>
+{% endblock content %}

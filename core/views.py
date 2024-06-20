@@ -5,7 +5,7 @@ from .models import Device,ApiKey,NumericalLog,GPIOOutputPin,LocationData
 # Create your views here.
 
 
-class ProfileView(View,LoginRequiredMixin):
+class ProfileView(LoginRequiredMixin,View):
     
     def get(self,request):
         context = {
@@ -15,7 +15,7 @@ class ProfileView(View,LoginRequiredMixin):
         return render(request,'core/index.html',context)
 
 
-class DeviceData(View,LoginRequiredMixin):
+class DeviceData(LoginRequiredMixin,View):
     
     def get(self,request,uuid):
         device = Device.objects.filter(device_id=uuid)[0]

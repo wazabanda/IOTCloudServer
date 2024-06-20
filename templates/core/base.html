@@ -1,0 +1,39 @@
+{% load compress %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <title>Dash</title>
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'src/output.css' %}">
+    {% endcompress %}
+    {% block head %}{% endblock head %}
+</head>
+<body>
+    
+
+<!-- {%include 'partials/nav_main.html'%} -->
+{%include 'partials/side_bar.html'%}
+<div class="p-4 sm:ml-64">
+   <div class="p-5 ">
+       
+         <!-- <div class="container mx-auto px-4"> -->
+         {% block content %}
+       
+         {% endblock content %}
+         <!-- </div> -->
+       
+         {% block scripts %}
+         
+         {% endblock scripts %}
+      
+   </div>
+</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+</body>
+</html>
