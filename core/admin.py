@@ -32,3 +32,14 @@ class LocationAdmin(admin.ModelAdmin):
 @admin.register(ProfileSettings)
 class ProfileSettings(admin.ModelAdmin):
     list_display=['user']
+    
+    
+class MqttTopicInline(admin.TabularInline):
+    model = MqttTopic
+    extra = 1
+
+@admin.register(MqttBrokerSettings)
+class MqttBrokerSettingsAdmin(admin.ModelAdmin):
+    inlines = [MqttTopicInline]
+    list_display = ['name','broker_address','port','username']
+    

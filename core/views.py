@@ -5,7 +5,7 @@ from .models import Device,ApiKey,NumericalLog,GPIOOutputPin,LocationData
 # Create your views here.
 
 
-class ProfileView(LoginRequiredMixin,View):
+class HomeView(LoginRequiredMixin,View):
     
     def get(self,request):
         context = {

@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.urls import path,include
-from .views import ProfileView,DeviceData
+from .views import HomeView,DeviceData
 
 urlpatterns = [
-    path('',ProfileView.as_view(),name='Profile-view'),
-    path('accounts/profile/',ProfileView.as_view(),name='Profile-view'),
+    path('',HomeView.as_view(),name='home-view'),
+    path('accounts/profile/',HomeView.as_view(),name='Profile-view'),
     
     path('devices/<uuid:uuid>/',DeviceData.as_view(),name='device')
 ]

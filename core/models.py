@@ -9,11 +9,28 @@ from django.urls import reverse, reverse_lazy as _
 
 
 
+
 class ProfileSettings(models.Model):
     user = models.ForeignKey(User, verbose_name="Profile", on_delete=models.CASCADE)
     google_api_key = models.TextField("Google Maps API Key",null=True)
     mqtt_broker = models.TextField(null=True)
 
+
+class MqttBrokerSettings(models.Model):
+    name = models.CharField(max_length=100)
+    broker_address = models.CharField(max_length=255)
+    port = models.IntegerField(default=1883)
+    username = models.CharField(max_length=100, blank=True, null=True)
+    password = models.CharField(max_length=100, blank=True, null=True)
+    
+    def __str__(self):
+        return self.name
+
+class MqttTopic(models.Model):
+    broker = models.ForeignKey(MqttBrokerSettings, related_name='topics', on_delete=models.CASCADE)
+    topic = models.CharField(max_length=255)
+    
+    
 class Device(models.Model):      
         
     class Meta:
