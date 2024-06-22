@@ -11,12 +11,13 @@ from django.urls import reverse, reverse_lazy as _
 
 
 class ProfileSettings(models.Model):
-    user = models.ForeignKey(User, verbose_name="Profile", on_delete=models.CASCADE)
+    user = models.OneToOneField(User, verbose_name="Profile", on_delete=models.CASCADE,default=1)
     google_api_key = models.TextField("Google Maps API Key",null=True)
-    mqtt_broker = models.TextField(null=True)
+    # mqtt_broker = models.TextField(null=True)
 
 
 class MqttBrokerSettings(models.Model):
+    profile_settings = models.ForeignKey(ProfileSettings, verbose_name="profile_settings", on_delete=models.CASCADE,null=True)
     name = models.CharField(max_length=100)
     broker_address = models.CharField(max_length=255)
     port = models.IntegerField(default=1883)
