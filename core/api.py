@@ -3,10 +3,10 @@ from ninja.errors import HttpError
 from typing import List, Dict
 from core.models import Device, NumericalLog, LocationData
 from django.shortcuts import get_object_or_404
-from .schema import DeviceSchema, NumericalLogSchema, LocationDataSchema
+from .schema import DeviceSchema, NumericalLogSchema, LocationDataSchema,NumericalLogOutSchema
 from datetime import datetime
 
-router = Router(tags=['Devices'])
+router = Router(tags=['Device API'])
 
 
 
@@ -25,17 +25,21 @@ def get_device(request, uuid: str):
 
 class LogEntry(Schema):
     value: float
-    date_time: datetime
+    # date_time: datetime
     data_label: str
 
 class AddNumericalLogPayload(Schema):
     logs: List[LogEntry]
 
-@router.get("/numerical-logs/{uuid}", response=List[NumericalLogSchema])
+@router.get("/device_logs/{uuid}", response=List[NumericalLogOutSchema])
 def get_numerical_logs(request, uuid: str):
-    device = get_object_or_404(Device, device_id=uuid)
+    # print("here")
+    device = Device.objects.get(device_id=uuid)
+    print(device)
     logs = NumericalLog.objects.filter(device=device)
+    # print(logs)
     return logs
+
 
 @router.post("/numerical-logs/{uuid}", response=List[NumericalLogSchema])
 def add_numerical_log(request, uuid: str, payload: AddNumericalLogPayload):

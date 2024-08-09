@@ -13,7 +13,7 @@ def on_message(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}")
 
 def get_mqtt_client(user):
-    profile_settings = ProfileSettings.objects.filter(user,user).first()
+    profile_settings = ProfileSettings.objects.filter(user=user).first()
     broker_settings = MqttBrokerSettings.objects.filter(profile_settings=profile_settings).first()
     if not broker_settings:
         raise ValueError("No MQTT broker settings found for the user in the database.")

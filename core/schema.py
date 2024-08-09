@@ -12,8 +12,13 @@ class DeviceSchema(ModelSchema):
 class NumericalLogSchema(ModelSchema):
     class Config:
         model = NumericalLog
-        model_fields = ["device", "value", "date_time", "data_label"]
+        model_fields = ["value", "data_label"]
 
+class NumericalLogOutSchema(ModelSchema):
+    class Config:
+        model = NumericalLog
+        model_fields = ["value", "data_label",'date_time']
+        
 class LocationDataSchema(ModelSchema):
     class Config:
         model = LocationData

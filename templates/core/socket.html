@@ -1,0 +1,78 @@
+
+<script>
+    // Establishing a WebSocket connection
+    const baseHostUrl =  window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+  
+    const socket = new WebSocket(`ws://${baseHostUrl }/ws/devices/{{device.device_id}}`);
+    function sendGpioMessage(pin,state)
+    {
+      const dataToSend = JSON.stringify({message:"Toggle pin",pin:pin,state:state,type:"pin.message"});
+      socket.send(dataToSend);
+    }
+    {% comment %} document.getElementById('sendButton').addEventListener('click', () => {
+          const dataToSend = JSON.stringify({message:`Hello, server! ${new Date()}`, type:"device.message"});
+          socket.send(dataToSend);
+      }); {% endcomment %}
+    // Connection opened
+    socket.addEventListener('open', (event) => {
+        console.log('WebSocket connection opened:', event);
+    });
+  
+    // Listen for messages
+    socket.addEventListener('message', (event) => {
+          const serverResponseDiv = document.getElementById('serverResponse');
+          serverResponseDiv.innerHTML = 'Server Response: ' + event.data;
+          var data = JSON.parse(event.data);
+          if(data.type === 'pin.message'){
+              const toggleButton = document.getElementById(`toggleButton${data.pin}`);
+              const toggleIndicator = document.getElementById(`toggleIndicator${data.pin}`);
+              const toggleButtonContainer = document.getElementById(`toggleButtonContainer${data.pin}`);
+  
+              toggleButton.checked = data.state;
+              const isChecked = data.state;
+              const translationValue = isChecked ? '6' : '0';
+              const translationValueO = !isChecked ? '6' : '0';
+            
+              toggleIndicator.classList.remove(`translate-x-${translationValueO}`);
+              toggleIndicator.classList.add(`translate-x-${translationValue}`);
+  
+              if (isChecked) {
+                toggleButtonContainer.classList.add('custom-background');
+              } else {
+                toggleButtonContainer.classList.remove('custom-background');
+              }
+    
+          }
+      });
+  
+    // Connection closed
+    socket.addEventListener('close', (event) => {
+        console.log('WebSocket connection closed:', event);
+    });
+  
+  
+    {% for pin in gpiopins %}
+    const toggleButton{{ pin.pin }} = document.getElementById('toggleButton{{ pin.pin }}');
+    const toggleIndicator{{ pin.pin }} = document.getElementById('toggleIndicator{{ pin.pin }}');
+    const toggleButtonContainer{{ pin.pin }} = document.getElementById('toggleButtonContainer{{ pin.pin }}');
+  
+    toggleButton{{ pin.pin }}.addEventListener('change', () => {
+      const isChecked = toggleButton{{ pin.pin }}.checked;
+      const translationValue = isChecked ? '6' : '0';
+      const translationValueO = !isChecked ? '6' : '0';
+      sendGpioMessage({{ pin.pin }},isChecked)
+      toggleIndicator{{ pin.pin }}.classList.remove(`translate-x-${translationValueO}`);
+      toggleIndicator{{ pin.pin }}.classList.add(`translate-x-${translationValue}`);
+  
+      if (isChecked) {
+        toggleButtonContainer{{ pin.pin }}.classList.add('custom-background');
+      } else {
+        toggleButtonContainer{{ pin.pin }}.classList.remove('custom-background');
+      }
+    });
+  {% endfor %}
+  
+      
+    </script>
+  
+  
