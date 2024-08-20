@@ -1,10 +1,11 @@
-{% extends "core/base.html" %} {% block content %}
+{% extends "core/base.html" %} 
+{% block content %}
 <style>
     /* Add any additional styles here */
     .custom-background {
       background-color: #3490dc; /* Blue color, change as needed */
     }
-  </style>
+</style>
 <h4
   class="mb-4 text-4l font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl"
 >
@@ -17,13 +18,11 @@
   class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6"
 ></div>
 
-{%if has_location_data%}
+{% if has_location_data %}
 Has loc
-{%endif%}
+{% endif %}
 
 <div id="buttons">
-    
-
     {% for pin in gpiopins %}
     <div>
       <p>{{ pin.name }} {{ pin.pin }}</p>
@@ -34,41 +33,36 @@ Has loc
             <div id="toggleIndicator{{ pin.pin }}" class="bg-white w-5 h-5 rounded-full shadow-md transform translate-x-0 duration-300 ease-in-out"></div>
           </div>
         </label>
-       
       </div>
     </div>
-  {% endfor %}
-  
+    {% endfor %}
 </div>
 
 <script>
-  const ctx = document.getElementById("myChart");
-
   const chartsMap = new Map();
   const parentDiv = document.getElementById("chart_container");
+
   async function fetchData() {
     try {
       const response = await fetch("/api/core/device_logs/{{device.device_id}}");
       const data = await response.json();
-      console.log(data);
-      // Process the data
+      
       const groupedData = groupBy(data, "data_label");
-      console.log(groupedData)
+      
       const labels = [...new Set(data.map((entry) => entry.date_time))];
 
-      // Create or update charts for each data label
       Object.keys(groupedData).forEach((dataLabel) => {
         let myLineChart = chartsMap.get(dataLabel);
 
+        const filteredData = groupedData[dataLabel].filter(
+          (entry) => entry.value !== null
+        );
+
+        const lastValue = filteredData[filteredData.length - 1]?.value;
+
         if (!myLineChart) {
-          // Filter out labels without matching data
           const filteredLabels = labels.filter((label) =>
             groupedData[dataLabel].some((entry) => entry.date_time === label)
-          );
-
-          // Filter out entries with null values
-          const filteredData = groupedData[dataLabel].filter(
-            (entry) => entry.value !== null
           );
 
           const chartData = {
@@ -88,16 +82,23 @@ Has loc
             ],
           };
 
-          // Create a canvas element for each chart
-          const canvas = document.createElement("canvas");
+          // Create a div for the chart and the header
           const div = document.createElement("div");
-          div.appendChild(canvas);
-          div.id = "myLineChart-${dataLabel}-div";
           div.classList = "sm:h-full";
+
+          // Create an h1 element for the last value display
+          const header = document.createElement("h1");
+          header.id = `lastValueDisplay-${dataLabel}`;
+          header.classList = "text-2xl font-bold mt-4";
+          div.appendChild(header);
+
+          // Create a canvas element for the chart
+          const canvas = document.createElement("canvas");
           canvas.id = `myLineChart-${dataLabel}`;
+          div.appendChild(canvas);
+
           parentDiv.appendChild(div);
 
-          // Create a new Chart.js instance for each canvas
           const ctx = canvas.getContext("2d");
           myLineChart = new Chart(ctx, {
             type: "line",
@@ -111,10 +112,8 @@ Has loc
             },
           });
 
-          // Store the chart in the map
           chartsMap.set(dataLabel, myLineChart);
         } else {
-          // Update the existing chart with new data
           myLineChart.data.labels = labels.filter((label) =>
             groupedData[dataLabel].some((entry) => entry.date_time === label)
           );
@@ -127,8 +126,13 @@ Has loc
             }
           );
 
-          // Update the chart
           myLineChart.update();
+        }
+
+        // Update the header with the last value
+        const headerElement = document.getElementById(`lastValueDisplay-${dataLabel}`);
+        if (headerElement && lastValue !== undefined) {
+          headerElement.innerText = `Latest Value for ${dataLabel}: ${lastValue}`;
         }
       });
     } catch (error) {
@@ -136,7 +140,6 @@ Has loc
     }
   }
 
-  // Function to group an array of objects by a specific key
   function groupBy(arr, key) {
     return arr.reduce((acc, obj) => {
       const groupKey = obj[key];
@@ -146,7 +149,6 @@ Has loc
     }, {});
   }
 
-  // Function to get a random color
   function getRandomColor() {
     const letters = "0123456789ABCDEF";
     let color = "#";
@@ -154,24 +156,16 @@ Has loc
       color += letters[Math.floor(Math.random() * 16)];
     }
 
-    // Add alpha (opacity) value, e.g., '80' corresponds to 50% opacity
     color += "80";
 
     return color;
   }
 
-  // ... rest of your code ...
-
-  // Fetch data initially
   fetchData();
-
-  // Fetch data every minute
-
   setInterval(fetchData, 60000 / 12);
 </script>
 
 <button id="sendButton">Send Message</button>
 <div id="serverResponse"></div>
-
 
 {% endblock content %}
