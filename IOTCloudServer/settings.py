@@ -90,7 +90,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "IOTCloudServer.wsgi.application"
-ASGI_APPLICATION = 'IOTCloudServer.asgi.application'
+# ASGI_APPLICATION = 'IOTCloudServer.asgi.application'
 
 
 # Database
