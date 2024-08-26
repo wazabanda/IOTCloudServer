@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
-CSRF_ALLOWED_ORRIGINS = ['https://iotcloudserver-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['https://iotcloudserver-production.up.railway.app']
 
 # Application definition
 
