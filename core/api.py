@@ -12,7 +12,8 @@ router = Router(tags=['Device API'])
 
 @router.get("/devices", response=List[DeviceSchema])
 def list_devices(request):
-    devices = Device.objects.all()
+    print(request.auth.id)
+    devices = Device.objects.filter(owner__id=request.auth.id)
     return devices
 
 @router.get("/device/{uuid}", response=DeviceSchema)
@@ -31,7 +32,7 @@ class LogEntry(Schema):
 class AddNumericalLogPayload(Schema):
     logs: List[LogEntry]
 
-@router.get("/device_logs/{uuid}", response=List[NumericalLogOutSchema])
+@router.get("/device_logs/{uuid}",auth=None, response=List[NumericalLogOutSchema])
 def get_numerical_logs(request, uuid: str):
     # print("here")
     device = Device.objects.get(device_id=uuid)
@@ -41,7 +42,7 @@ def get_numerical_logs(request, uuid: str):
     return logs
 
 
-@router.post("/numerical-logs/{uuid}", response=List[NumericalLogSchema])
+@router.post("/numerical-logs/{uuid}",auth=None, response=List[NumericalLogSchema])
 def add_numerical_log(request, uuid: str, payload: AddNumericalLogPayload):
     device = get_object_or_404(Device, device_id=uuid)
     logs = payload.logs
@@ -51,13 +52,13 @@ def add_numerical_log(request, uuid: str, payload: AddNumericalLogPayload):
     NumericalLog.objects.bulk_create(log_objects)
     return log_objects
 
-@router.get("/location-data/{uuid}", response=List[LocationDataSchema])
+@router.get("/location-data/{uuid}",auth=None, response=List[LocationDataSchema])
 def get_location_data(request, uuid: str):
     device = get_object_or_404(Device, device_id=uuid)
     location_data = LocationData.objects.filter(device=device)
     return location_data
 
-@router.post("/location-data/{uuid}", response=LocationDataSchema)
+@router.post("/location-data/{uuid}",auth=None, response=LocationDataSchema)
 def add_location_data(request, uuid: str, payload: LocationDataSchema):
     device = get_object_or_404(Device, device_id=uuid)
     location_data = LocationData.objects.create(device=device, **payload.dict())

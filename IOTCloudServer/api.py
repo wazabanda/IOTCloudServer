@@ -1,7 +1,7 @@
 from ninja import NinjaAPI, Swagger
 from .api_auth import GlobalAuth,add_authenticated_user,AuthBearer
 from core.models import ExpirableToken,User,ProfileSettings
-api = NinjaAPI(docs=Swagger(settings={"persistAuthorization": True}),version='1.0.0',auth=None)
+api = NinjaAPI(docs=Swagger(settings={"persistAuthorization": True}),version='1.0.0',auth=GlobalAuth())
 
 api.add_router('/core','core.api.router')
 # api.add_middleware(add_authenticated_user)

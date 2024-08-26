@@ -132,7 +132,7 @@ Has loc
         // Update the header with the last value
         const headerElement = document.getElementById(`lastValueDisplay-${dataLabel}`);
         if (headerElement && lastValue !== undefined) {
-          headerElement.innerText = `Latest Value for ${dataLabel}: ${lastValue}`;
+          headerElement.innerText = `Current ${dataLabel}: ${lastValue}`;
         }
       });
     } catch (error) {
