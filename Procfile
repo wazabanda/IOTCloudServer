@@ -1,1 +1,1 @@
-web: gunicorn IOTCloudServer.wsgi --log-file -
+web: daphne -u /tmp/daphne.sock IOTCloudServer.asgi:application
