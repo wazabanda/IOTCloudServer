@@ -32,7 +32,7 @@ CSRF_TRUSTED_ORIGINS = ['https://iotcloudserver-production.up.railway.app']
 # Application definition
 
 INSTALLED_APPS = [
-    # 'daphne',
+    'daphne',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -93,7 +93,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "IOTCloudServer.wsgi.application"
-# ASGI_APPLICATION = 'IOTCloudServer.asgi.application'
+ASGI_APPLICATION = 'IOTCloudServer.asgi.application'
 
 
 # Database

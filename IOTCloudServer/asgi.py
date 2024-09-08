@@ -19,13 +19,13 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "IOTCloudServer.settings")
 # websocket_urlpatterns = [
 #     re_path(r'ws/some_path/$', MyConsumer.as_asgi()),
 # ]
-application = get_asgi_application()
-# application = ProtocolTypeRouter({
-#     "http": get_asgi_application(),
-#     "websocket": AuthMiddlewareStack(
-#         URLRouter(
-#             core.routing.websocket_urlpatterns
-#             # your websocket routing goes here
-#         )
-#     ),
-# })
+#application = get_asgi_application()
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            core.routing.websocket_urlpatterns
+            # your websocket routing goes here
+        )
+    ),
+})
