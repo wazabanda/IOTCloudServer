@@ -137,16 +137,20 @@ AUTHENTICATION_BACKENDS = [
  ]
 
 
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [(os.environ.get("REDIS_URL","127.0.0.1:6379"))], # update this line.
+#         },
+#     },
+# }
+
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [(os.environ.get("REDIS_URL","127.0.0.1:6379"))], # update this line.
-        },
-    },
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
