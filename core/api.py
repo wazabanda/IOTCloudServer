@@ -1,9 +1,9 @@
 from ninja import Router, Schema
 from ninja.errors import HttpError
 from typing import List, Dict
-from core.models import Device, NumericalLog, LocationData
+from core.models import Device, GPIOOutputPin, NumericalLog, LocationData
 from django.shortcuts import get_object_or_404
-from .schema import DeviceSchema, NumericalLogSchema, LocationDataSchema,NumericalLogOutSchema
+from .schema import DeviceSchema, GpioSchema, NumericalLogSchema, LocationDataSchema,NumericalLogOutSchema
 from datetime import datetime
 
 router = Router(tags=['Device API'])
@@ -64,3 +64,10 @@ def add_location_data(request, uuid: str, payload: LocationDataSchema):
     location_data = LocationData.objects.create(device=device, **payload.dict())
     return location_data
 
+
+@router.get("/pins/{uuid}",auth=None,response=List[GpioSchema])
+def get_pins(request,uuid:str):
+    device = get_object_or_404(Device,device_id=uuid)
+    pins = GPIOOutputPin.objects.filter(device=device)
+
+    return pins

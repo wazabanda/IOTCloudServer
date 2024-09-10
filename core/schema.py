@@ -19,6 +19,12 @@ class NumericalLogOutSchema(ModelSchema):
         model = NumericalLog
         model_fields = ["value", "data_label",'date_time']
         
+class GpioSchema(ModelSchema):
+    class Config:
+        model = GPIOOutputPin
+        model_fields = ['name',"pin","device"]
+
+
 class LocationDataSchema(ModelSchema):
     class Config:
         model = LocationData
