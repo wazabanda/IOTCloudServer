@@ -1,1 +1,1 @@
-web: daphne -u /tmp/daphne.sock IOTCloudServer.asgi:application
+web: daphne -b 0.0.0.0 -p $PORT IOTCloudServer.asgi:application
