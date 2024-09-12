@@ -2,8 +2,9 @@
 <script>
     // Establishing a WebSocket connection
     const baseHostUrl =  window.location.hostname + (window.location.port ? ':' + window.location.port : '');
-  
-    const socket = new WebSocket(`ws://${baseHostUrl }/ws/devices/{{device.device_id}}`);
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(`${protocol}://${baseHostUrl}/ws/devices/302782f5-f1f9-4986-a7ce-b3313b38740d`);
+
     function sendGpioMessage(pin,state)
     {
       const dataToSend = JSON.stringify({message:"Toggle pin",pin:pin,state:state,type:"pin.message"});
