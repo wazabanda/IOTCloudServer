@@ -4,6 +4,7 @@ from datetime import datetime
 import uuid
 from .models import *
 
+
 class DeviceSchema(ModelSchema):
     class Config:
         model = Device
@@ -29,3 +30,21 @@ class LocationDataSchema(ModelSchema):
     class Config:
         model = LocationData
         model_fields = "__all__" 
+
+
+
+class InventoryEntryLogSchema(ModelSchema):
+    class Config:
+        model = InventoryEntryLog
+        model_fields = ['log_type','timestamp']
+
+
+class InventoryEntryOutSchema(ModelSchema):
+    class Config:
+        model = InventoryEntry 
+        model_fields = "__all__"
+
+
+class InventoryEntryInSchema(Schema):
+    device:str
+    logs:InventoryEntryLogSchema

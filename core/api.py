@@ -1,9 +1,10 @@
+from core.admin import DeviceAdmin
 from ninja import Router, Schema
 from ninja.errors import HttpError
 from typing import List, Dict
 from core.models import Device, GPIOOutputPin, NumericalLog, LocationData
 from django.shortcuts import get_object_or_404
-from .schema import DeviceSchema, GpioSchema, NumericalLogSchema, LocationDataSchema,NumericalLogOutSchema
+from .schema import * 
 from datetime import datetime
 
 router = Router(tags=['Device API'])
@@ -63,11 +64,30 @@ def add_location_data(request, uuid: str, payload: LocationDataSchema):
     device = get_object_or_404(Device, device_id=uuid)
     location_data = LocationData.objects.create(device=device, **payload.dict())
     return location_data
-
-
+0
 @router.get("/pins/{uuid}",auth=None,response=List[GpioSchema])
 def get_pins(request,uuid:str):
     device = get_object_or_404(Device,device_id=uuid)
     pins = GPIOOutputPin.objects.filter(device=device)
 
     return pins
+
+@router.get("/inventory/entry/{uuid}",auth=None,response=List[InventoryEntryOutSchema])
+def get_inventory_entry(request,uuid:str):
+    device = get_object_or_404(Device,device_id=uuid)
+    inventory_entry = InventoryEntry.objects.filter(device=device)
+    return inventory_entry
+
+@router.get("/inventory/logs/{id}",auth=None,response=List[InventoryEntryLogSchema])
+def get_inventory_log(request,id:str):
+    inventory_entry = InventoryEntry.objects.filter(entry_id=id)[0]
+    logs = InventoryEntryLog.objects.filter(parent_entry=inventory_entry)
+    return logs
+
+
+@router.post("/inventory/logs/{id}",auth=None,response=List[InventoryEntryLogSchema])
+def create_inventory_log(request,id:str,payload:InventoryEntryLogSchema):
+    inventory_entry = InventoryEntry.objects.filter(entry_id=id)[0]
+    log = InventoryEntryLog.objects.create(parent_entry=inventory_entry,log_type=payload.log_type,timestamp=payload.timestamp)
+    logs = InventoryEntryLog.objects.filter(parent_entry=inventory_entry)
+    return logs

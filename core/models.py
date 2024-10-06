@@ -74,6 +74,26 @@ class NumericalLog(models.Model):
         return str(self.device)
 
 
+class InventoryEntry(models.Model):
+    
+    class Meta:
+        verbose_name = "Inventory Entry"
+        verbose_name = "Inventory Entries"
+
+    device = models.ForeignKey(Device, verbose_name=('Device'), on_delete=models.CASCADE)
+    entry_name = models.CharField("Name",max_length=64,default="name",unique=False)
+    entry_id = models.TextField("Identifier",unique=True)
+    
+
+class InventoryEntryLog(models.Model):
+
+    LOG_TYPE = (('In','In'),('Out','Out'))
+    parent_entry = models.ForeignKey(InventoryEntry,on_delete=models.PROTECT)
+    log_type = models.CharField("Log Type",max_length=3,choices=LOG_TYPE)
+    timestamp = models.DateTimeField("Timestamp",null=True,default=timezone.now)
+
+    
+
 class GPIOOutputPin(models.Model):
 
     
