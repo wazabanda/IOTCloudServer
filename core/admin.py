@@ -42,4 +42,14 @@ class MqttTopicInline(admin.TabularInline):
 class MqttBrokerSettingsAdmin(admin.ModelAdmin):
     inlines = [MqttTopicInline]
     list_display = ['name','broker_address','port','username']
-    
+
+
+class InventoryEntryLogInline(admin.TabularInline):
+    model = InventoryEntryLog
+    extra = 1
+
+
+@admin.register(InventoryEntry)
+class InventoryEntryAdmin(admin.ModelAdmin):
+    list_display = ['entry_name','entry_id']
+    inlines = [InventoryEntryLogInline]

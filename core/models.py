@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 import uuid
 import secrets
 from datetime import datetime,timezone
-from django.utils import timezone
+from django.utils import choices, timezone
 from django.urls import reverse, reverse_lazy as _
 # Create your models here.
 
@@ -73,6 +73,28 @@ class NumericalLog(models.Model):
     def __str__(self):
         return str(self.device)
 
+
+class InventoryEntry(models.Model):
+        
+    class Meta:
+        verbose_name = "Inventory Entry"
+        verbose_name = "Inventory Entries"
+    
+    ENTRY_TYPE = (("Inventory","Inventory"),("Attendance","Attendance"))
+    entry_type = models.CharField(max_length=16,choices=ENTRY_TYPE,default="Inventory")
+    device = models.ForeignKey(Device, verbose_name=('Device'), on_delete=models.CASCADE)
+    entry_name = models.CharField("Name",max_length=64,default="name",unique=False)
+    entry_id = models.TextField("Identifier",unique=True)
+    
+
+class InventoryEntryLog(models.Model):
+
+    LOG_TYPE = (('In','In'),('Out','Out'))
+    parent_entry = models.ForeignKey(InventoryEntry,on_delete=models.PROTECT)
+    log_type = models.CharField("Log Type",max_length=3,choices=LOG_TYPE)
+    timestamp = models.DateTimeField("Timestamp",null=True,default=timezone.now)
+
+    
 
 class GPIOOutputPin(models.Model):
 
