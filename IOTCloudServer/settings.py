@@ -28,9 +28,21 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
-CSRF_TRUSTED_ORIGINS = ['https://iotcloudserver-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['https://iotcloudserver-production.up.railway.app','http://127.0.0.1:8010',
+                        'https://127.0.0.1:8010','http://127.0.0.1:8000']
 
-# Application definition
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
+
+# CSRF settings
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+# If you're testing locally without HTTPS
+CSRF_COOKIE_SECURE = False
 
 INSTALLED_APPS = [
     'daphne',

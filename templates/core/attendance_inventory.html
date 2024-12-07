@@ -1,0 +1,138 @@
+
+<h4 class="mb-4">Inventory and Attendance Records</h4>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tablinks active" onclick="openTab(event, 'Inventory')">Inventory</button>
+  <button class="tablinks" onclick="openTab(event, 'Attendance')">Attendance</button>
+</div>
+
+<!-- Inventory Tab -->
+<div id="Inventory" class="tabcontent">
+  <h4 class="mb-4">Inventory Totals</h4>
+  <table id="inventoryTable" class="min-w-full bg-white border border-gray-200">
+    <thead>
+      <tr>
+        <th class="py-2 px-4 border-b">Item Name</th>
+        <th class="py-2 px-4 border-b">Total In</th>
+        <th class="py-2 px-4 border-b">Total Out</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item, totals in inventory_totals.items %}
+      <tr>
+        <td class="py-2 px-4 border-b">{{ item }}</td>
+        <td class="py-2 px-4 border-b">{{ totals.total_in }}</td>
+        <td class="py-2 px-4 border-b">{{ totals.total_out }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td class="py-2 px-4 border-b text-center" colspan="3">No inventory logs available.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Attendance Tab -->
+<div id="Attendance" class="tabcontent" style="display:none;">
+  <h4 class="mb-4">Attendance Records</h4>
+  <table id="attendanceTable" class="min-w-full bg-white border border-gray-200">
+    <thead>
+      <tr>
+        <th class="py-2 px-4 border-b">Entry Name</th>
+        <th class="py-2 px-4 border-b">Last In</th>
+        <th class="py-2 px-4 border-b">Last Out</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for attendance in attendance_entries %}
+      <tr>
+        <td class="py-2 px-4 border-b">{{ attendance.entry_name }}</td>
+        <td class="py-2 px-4 border-b">
+          {% if attendance.last_in %}
+            {{ attendance.last_in.timestamp|date:"Y-m-d H:i:s" }}
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+        <td class="py-2 px-4 border-b">
+          {% if attendance.last_out %}
+            {{ attendance.last_out.timestamp|date:"Y-m-d H:i:s" }}
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td class="py-2 px-4 border-b text-center" colspan="3">No attendance records available.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- DataTables and JavaScript -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    $('#inventoryTable').DataTable();
+    $('#attendanceTable').DataTable();
+  });
+
+  function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+
+    // Get all tab content and hide them
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+    }
+
+    // Get all tab links and remove the 'active' class
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+      tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab and add an 'active' class to the link that opened it
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+  }
+
+  // Open the inventory tab by default
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelector(".tablinks.active").click();
+  });
+</script>
+
+<style>
+  /* Basic styles for tabs */
+  .tabs {
+    margin-bottom: 1em;
+  }
+  .tablinks {
+    background-color: #f1f1f1;
+    border: none;
+    outline: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .tablinks:hover {
+    background-color: #ddd;
+  }
+  .tablinks.active {
+    background-color: #3490dc; /* Active tab color */
+    color: white;
+  }
+  .tabcontent {
+    display: none;
+    padding: 10px;
+  }
+</style>
+
