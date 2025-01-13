@@ -18,9 +18,19 @@
 
 <!-- {%include 'partials/nav_main.html'%} -->
 {%include 'partials/side_bar.html'%}
-<div class="p-4 sm:ml-64">
+
+    <div class="p-4 sm:ml-64">
    <div class="p-5 ">
-       
+ 
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-4 {% if message.tags == 'success' %}bg-green-100 text-green-700{% endif %} rounded">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}      
          <!-- <div class="container mx-auto px-4"> -->
          {% block content %}
        
