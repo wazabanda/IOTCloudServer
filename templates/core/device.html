@@ -1,59 +1,52 @@
-{% extends "core/base.html" %} 
+{% extends 'core/base.html' %}
+{% load static %}
+
 {% block content %}
-<style>
-    /* Add any additional styles here */
-    .custom-background {
-      background-color: #3490dc; /* Blue color, change as needed */
-    }
-    .plotly-graph {
-      width: 100%;
-      height: 300px;
-      margin-bottom: 1rem;
-    }
-</style>
 <div class="flex justify-between items-center mb-6">
-    <h4 class="text-4l font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl">
-        {{device}} Readings
-    </h4>
-    <a href="{% url 'device_detail' device.id %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    <h1 class="text-3xl font-bold">{{device}} Readings</h1>
+    <a href="{% url 'device' device.device_id %}" class="btn btn-primary">
         Manage Device
     </a>
 </div>
 
 <!-- Load Plotly.js -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<div id="chart_container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 bg-white p-4 shadow"></div>
+<div id="chart_container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6"></div>
 
 {% if has_location_data %}
-<div class="mt-6 bg-white p-4 shadow">
-    <h4 class="text-lg font-medium text-gray-900 mb-4">Location Data</h4>
-    <p class="text-gray-500">Location data is available for this device.</p>
-    <div id="map" class="w-full h-64 mt-4"></div>
+<div class="card bg-base-100 shadow-xl mt-6">
+    <div class="card-body">
+        <h2 class="card-title">Location Data</h2>
+        <p>Location data is available for this device.</p>
+        <div id="map" class="w-full h-64 mt-4 bg-base-200 rounded-box"></div>
+    </div>
 </div>
 {% endif %}
 
-<div id="buttons" class="mt-6 bg-white p-4 shadow">
-    <h4 class="text-lg font-medium text-gray-900 mb-4">GPIO Controls</h4>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for pin in gpiopins %}
-        <div class="p-4 border-b border-gray-200">
-            <p class="font-medium text-gray-900">{{ pin.name }} (Pin {{ pin.pin }})</p>
-            <div class="flex items-center mt-2">
-                <input type="checkbox" id="toggleButton{{ pin.pin }}" class="hidden">
-                <label for="toggleButton{{ pin.pin }}" class="cursor-pointer">
-                    <div id="toggleButtonContainer{{ pin.pin }}" class="w-12 h-6 bg-gray-300 rounded-full p-1 duration-300 ease-in-out">
-                        <div id="toggleIndicator{{ pin.pin }}" class="bg-white w-5 h-5 rounded-full shadow-md transform translate-x-0 duration-300 ease-in-out"></div>
-                    </div>
-                </label>
+<div class="card bg-base-100 shadow-xl mt-6">
+    <div class="card-body">
+        <h2 class="card-title">GPIO Controls</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for pin in gpiopins %}
+            <div class="border-b border-base-300 pb-4">
+                <p class="font-medium">{{ pin.name }} (Pin {{ pin.pin }})</p>
+                <div class="flex items-center mt-2">
+                    <input type="checkbox" id="toggleButton{{ pin.pin }}" class="toggle toggle-primary">
+                </div>
             </div>
+            {% empty %}
+            <div class="col-span-full">
+                <div class="alert alert-info">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>No GPIO pins configured for this device. <a href="{% url 'device' device.device_id %}" class="link link-primary">Add pins</a></span>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <p class="text-gray-500 col-span-full">No GPIO pins configured for this device. <a href="{% url 'device_detail' device.id %}" class="text-blue-500 hover:underline">Add pins</a></p>
-        {% endfor %}
     </div>
 </div>
 
-{%include "core/socket.html"%}
+{% include "core/socket.html" %}
 <script>
   const plotsMap = new Map();
   const parentDiv = document.getElementById("chart_container");
@@ -65,58 +58,70 @@
       
       const groupedData = groupBy(data, "data_label");
       
-      // Get all unique data labels
-      const dataLabels = Object.keys(groupedData);
-      
-      dataLabels.forEach((dataLabel) => {
-        // Sort data by date_time
-        groupedData[dataLabel].sort((a, b) => 
-          new Date(a.date_time) - new Date(b.date_time)
-        );
-        
-        // Get the last value for this data label
-        const lastValue = groupedData[dataLabel][groupedData[dataLabel].length - 1]?.value;
-        
-        // Extract timestamps and values
-        const timestamps = groupedData[dataLabel].map(entry => new Date(entry.date_time));
+      Object.keys(groupedData).forEach(dataLabel => {
         const values = groupedData[dataLabel].map(entry => entry.value);
+        const timestamps = groupedData[dataLabel].map(entry => new Date(entry.date_time));
+        
+        // Sort by timestamp
+        const sortedData = timestamps.map((timestamp, i) => ({
+          timestamp,
+          value: values[i]
+        })).sort((a, b) => a.timestamp - b.timestamp);
+        
+        const sortedTimestamps = sortedData.map(entry => entry.timestamp);
+        const sortedValues = sortedData.map(entry => entry.value);
+        
+        // Get the last value for display
+        const lastValue = sortedValues[sortedValues.length - 1];
         
         // Check if we already have a plot for this data label
-        if (!plotsMap.has(dataLabel)) {
-          // Create a div for the chart and the header
-          const div = document.createElement("div");
-          div.classList = "bg-white p-4";
+        if (plotsMap.has(dataLabel)) {
+          // Update existing plot
+          const update = {
+            x: [sortedTimestamps],
+            y: [sortedValues]
+          };
           
-          // Create an h1 element for the last value display
-          const header = document.createElement("h1");
-          header.id = `lastValueDisplay-${dataLabel}`;
-          header.classList = "text-2xl font-bold mt-4 text-gray-900";
-          header.innerText = `Current ${dataLabel}: ${lastValue}`;
-          div.appendChild(header);
-          
-          // Create a div for the plot
+          Plotly.update(`plot-${dataLabel}`, update);
+        } else {
+          // Create a new plot
           const plotDiv = document.createElement("div");
           plotDiv.id = `plot-${dataLabel}`;
-          plotDiv.classList = "plotly-graph";
-          div.appendChild(plotDiv);
+          plotDiv.classList = "plotly-graph h-64";
+          
+          // Create a div for the chart and the header
+          const div = document.createElement("div");
+          div.classList = "card bg-base-100 shadow-xl";
+          
+          // Create card body
+          const cardBody = document.createElement("div");
+          cardBody.classList = "card-body";
+          
+          // Create card title
+          const cardTitle = document.createElement("h2");
+          cardTitle.classList = "card-title";
+          cardTitle.id = `lastValueDisplay-${dataLabel}`;
+          cardTitle.innerText = `${dataLabel}: ${lastValue}`;
+          
+          // Add elements to the DOM
+          cardBody.appendChild(cardTitle);
+          cardBody.appendChild(plotDiv);
+          div.appendChild(cardBody);
           
           // Add the div to the parent
           parentDiv.appendChild(div);
           
           // Create the trace for the plot
           const trace = {
-            x: timestamps,
-            y: values,
-            type: 'scatter',
-            mode: 'lines+markers',
+            x: sortedTimestamps,
+            y: sortedValues,
+            type: "scatter",
+            mode: "lines+markers",
             name: dataLabel,
             line: {
-              color: '#3B82F6',
+              color: '#570df8',
               width: 2
             },
-            marker: {
-              size: 5
-            }
           };
           
           // Create the layout for the plot
@@ -125,25 +130,23 @@
               text: dataLabel,
               font: {
                 family: 'Arial, sans-serif',
-                size: 18,
+                size: 16,
                 color: '#333'
               }
             },
             xaxis: {
-              title: 'Time',
               showgrid: true,
               gridcolor: '#e5e5e5'
             },
             yaxis: {
-              title: dataLabel,
               showgrid: true,
               gridcolor: '#e5e5e5'
             },
             margin: {
-              l: 50,
+              l: 40,
               r: 20,
-              t: 50,
-              b: 50
+              t: 40,
+              b: 40
             },
             plot_bgcolor: '#fff',
             paper_bgcolor: '#fff',
@@ -157,22 +160,14 @@
           
           Plotly.newPlot(`plot-${dataLabel}`, [trace], layout, config);
           
-          // Store the plot in the map
+          // Add to map so we know we have this plot already
           plotsMap.set(dataLabel, true);
-        } else {
-          // Update existing plot
-          const update = {
-            x: [timestamps],
-            y: [values]
-          };
-          
-          Plotly.update(`plot-${dataLabel}`, update);
         }
         
         // Update the header with the last value
         const headerElement = document.getElementById(`lastValueDisplay-${dataLabel}`);
         if (headerElement && lastValue !== undefined) {
-          headerElement.innerText = `Current ${dataLabel}: ${lastValue}`;
+          headerElement.innerText = `${dataLabel}: ${lastValue}`;
         }
       });
       
@@ -194,15 +189,6 @@
       return acc;
     }, {});
   }
-
-  function getRandomColor() {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  }
   
   {% if has_location_data %}
   // Initialize map if we have location data
@@ -212,7 +198,7 @@
     // Load the map API (you can use Google Maps, Leaflet, etc.)
     // For this example, I'll use a placeholder
     map = document.getElementById('map');
-    map.innerHTML = '<div class="flex items-center justify-center h-full bg-gray-100 text-gray-500">Map will be displayed here</div>';
+    map.innerHTML = '<div class="flex items-center justify-center h-full bg-base-200 text-base-content">Map will be displayed here</div>';
   }
   
   function updateMap(data) {

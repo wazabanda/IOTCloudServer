@@ -2,7 +2,7 @@
 <script>
     // Initialize WebSocket connection
     const deviceId = '{{ device.device_id }}';
-    const baseHostUrl =  window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+    const baseHostUrl = window.location.hostname + (window.location.port ? ':' + window.location.port : '');
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const socket = new WebSocket(`${protocol}://${baseHostUrl}/ws/devices/${deviceId}`);
     
@@ -37,26 +37,42 @@
     }
     
     // Set up message sending functionality
-    if (sendMessageBtn && messageInput) {
-        sendMessageBtn.addEventListener('click', function() {
-            const message = messageInput.value.trim();
-            if (message && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({
-                    type: 'device.message',
-                    message: message
-                }));
-                messageInput.value = '';
-                addMessageToDisplay(`You: ${message}`);
-            }
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM Content Loaded - Setting up message functionality");
+        console.log("Message Input:", messageInput);
+        console.log("Send Button:", sendMessageBtn);
         
-        // Allow sending with Enter key
-        messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessageBtn.click();
-            }
-        });
-    }
+        if (sendMessageBtn && messageInput) {
+            sendMessageBtn.addEventListener('click', function() {
+                console.log("Send button clicked");
+                const message = messageInput.value.trim();
+                if (message && socket.readyState === WebSocket.OPEN) {
+                    console.log("Sending message:", message);
+                    socket.send(JSON.stringify({
+                        type: 'device.message',
+                        message: message
+                    }));
+                    messageInput.value = '';
+                    addMessageToDisplay(`You: ${message}`);
+                } else {
+                    console.log("Cannot send message. Socket state:", socket.readyState);
+                    if (!message) console.log("Message is empty");
+                }
+            });
+            
+            // Allow sending with Enter key
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    console.log("Enter key pressed");
+                    sendMessageBtn.click();
+                }
+            });
+            
+            console.log("Event listeners added to message input and send button");
+        } else {
+            console.log("Message input or send button not found");
+        }
+    });
     
     // Set up GPIO pin toggle buttons
     toggleButtons.forEach(button => {
@@ -67,7 +83,7 @@
         // Initialize pin state tracking
         pinStates[pin] = button.checked ? 'on' : 'off';
         
-        if (button && container && indicator) {
+        if (button) {
             button.addEventListener('change', function() {
                 const isChecked = this.checked;
                 const newState = isChecked ? 'on' : 'off';
@@ -75,16 +91,6 @@
                 // Only send message if state has actually changed
                 if (pinStates[pin] !== newState) {
                     pinStates[pin] = newState;
-                    
-                    if (isChecked) {
-                        container.classList.add('bg-green-500');
-                        container.classList.remove('bg-gray-300');
-                        indicator.classList.add('translate-x-6');
-                    } else {
-                        container.classList.remove('bg-green-500');
-                        container.classList.add('bg-gray-300');
-                        indicator.classList.remove('translate-x-6');
-                    }
                     
                     // Send WebSocket message to change pin state
                     if (socket.readyState === WebSocket.OPEN) {
@@ -139,22 +145,6 @@
                 const toggleButton = document.getElementById(`toggleButton${pin}`);
                 if (toggleButton) {
                     toggleButton.checked = state === 'on';
-                    
-                    // Update the visual state of the toggle
-                    const container = document.getElementById(`toggleButtonContainer${pin}`);
-                    const indicator = document.getElementById(`toggleIndicator${pin}`);
-                    
-                    if (container && indicator) {
-                        if (state === 'on') {
-                            container.classList.add('bg-green-500');
-                            container.classList.remove('bg-gray-300');
-                            indicator.classList.add('translate-x-6');
-                        } else {
-                            container.classList.remove('bg-green-500');
-                            container.classList.add('bg-gray-300');
-                            indicator.classList.remove('translate-x-6');
-                        }
-                    }
                 }
             }
         }
@@ -164,17 +154,16 @@
     document.addEventListener('DOMContentLoaded', function() {
         toggleButtons.forEach(button => {
             const pin = button.id.replace('toggleButton', '');
-            const container = document.getElementById(`toggleButtonContainer${pin}`);
             
-            // If the container has the green background class, the toggle is on
-            if (container && container.classList.contains('bg-green-500')) {
-                button.checked = true;
+            // If the toggle is checked, the state is on
+            if (button.checked) {
                 pinStates[pin] = 'on';
             } else {
-                button.checked = false;
                 pinStates[pin] = 'off';
             }
         });
+        
+        console.log("Pin states initialized:", pinStates);
     });
 </script>
   

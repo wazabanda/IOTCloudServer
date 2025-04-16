@@ -1,156 +1,196 @@
 {% extends "core/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white shadow sm:rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex justify-between items-center">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">
-                    {{ device.device_name }}
-                </h3>
-                <div class="flex space-x-2">
-                    <a href="{% url 'device_update' device.id %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
-                        Edit
-                    </a>
-                    <a href="{% url 'device_delete' device.id %}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">
-                        Delete
-                    </a>
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="card-title text-2xl">{{ device.name }}</h2>
+            <div class="flex gap-2">
+                <a href="{% url 'device_update' device.id %}" class="btn btn-sm btn-outline">Edit</a>
+                <a href="{% url 'device_delete' device.id %}" class="btn btn-sm btn-error">Delete</a>
+            </div>
+        </div>
+        
+        <div class="stats shadow mb-6">
+            <div class="stat">
+                <div class="stat-title">Status</div>
+                <div class="stat-value">
+                    {% if device.is_online %}
+                    <span class="badge badge-success">Online</span>
+                    {% else %}
+                    <span class="badge badge-error">Offline</span>
+                    {% endif %}
                 </div>
             </div>
             
-            <div class="mt-4">
-                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                    <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Device ID</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ device.device_id }}</dd>
-                    </div>
-                    <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Owner</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ device.owner.username }}</dd>
-                    </div>
-                </dl>
+            <div class="stat">
+                <div class="stat-title">Last Seen</div>
+                <div class="stat-value text-lg">
+                    {{ device.last_seen|default:"Never" }}
+                </div>
             </div>
             
-            <!-- WebSocket Communication Section -->
-            <div class="mt-8 border-t border-gray-200 pt-6">
-                <h4 class="text-lg font-medium text-gray-900 mb-4">Device Communication</h4>
-                
-                <!-- Server Response Display -->
-                <div class="mb-4">
-                    <label for="serverResponse" class="block text-sm font-medium text-gray-700 mb-2">Server Response</label>
-                    <div id="serverResponse" class="bg-gray-50 p-3 h-32 overflow-y-auto border border-gray-200 rounded-md text-sm font-mono">
-                        <p class="text-gray-500">Waiting for messages...</p>
-                    </div>
-                </div>
-                
-                <!-- Message Input -->
-                <div class="flex space-x-2">
-                    <div class="flex-grow">
-                        <input type="text" id="messageInput" placeholder="Enter message to send to device" 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <button id="sendMessageBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Send
+            <div class="stat">
+                <div class="stat-title">API Key</div>
+                <div class="stat-value text-lg flex items-center gap-2">
+                    <span class="text-sm font-mono truncate max-w-xs">{{ device.api_key }}</span>
+                    <button class="btn btn-sm btn-ghost" onclick="copyApiKey()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
                     </button>
                 </div>
             </div>
-            
-            <!-- GPIO Pins Section -->
-            <div class="mt-8 border-t border-gray-200 pt-6">
-                <h4 class="text-lg font-medium text-gray-900 mb-4">GPIO Pins</h4>
-                
-                {% if gpio_pins %}
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {% for pin in gpio_pins %}
-                    <div class="p-4 border-b border-gray-200">
-                        <p class="font-medium text-gray-900">{{ pin.name }} (Pin {{ pin.pin }})</p>
-                        <div class="flex items-center mt-2">
-                            <input type="checkbox" id="toggleButton{{ pin.pin }}" class="hidden">
-                            <label for="toggleButton{{ pin.pin }}" class="cursor-pointer">
-                                <div id="toggleButtonContainer{{ pin.pin }}" class="w-12 h-6 bg-gray-300 rounded-full p-1 duration-300 ease-in-out">
-                                    <div id="toggleIndicator{{ pin.pin }}" class="bg-white w-5 h-5 rounded-full shadow-md transform translate-x-0 duration-300 ease-in-out"></div>
-                                </div>
-                            </label>
-                            <a href="{% url 'delete_gpio_pin' pin.id %}" class="ml-4 text-red-600 hover:text-red-900 text-sm">Delete</a>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pin Number</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for pin in gpio_pins %}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pin.name }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ pin.pin }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="{% url 'delete_gpio_pin' pin.id %}" class="text-red-600 hover:text-red-900">Delete</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-gray-500">No GPIO pins configured for this device.</p>
-                {% endif %}
-                
-                <!-- Add GPIO Pin Form -->
-                <div class="mt-6 pt-6 border-t border-gray-100">
-                    <h5 class="text-md font-medium text-gray-900 mb-3">Add New GPIO Pin</h5>
-                    <form method="post" action="{% url 'add_gpio_pin' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="device" value="{{ device.id }}">
-                        
-                        <div class="grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-4">
-                            <div>
-                                <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
-                                <input type="text" name="name" id="id_name" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label for="id_pin" class="block text-sm font-medium text-gray-700">Pin Number</label>
-                                <input type="number" name="pin" id="id_pin" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                                Add Pin
-                            </button>
-                        </div>
-                    </form>
-                </div>
+        </div>
+        
+        <div class="divider">Device Information</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Description</h3>
+                <p>{{ device.description|default:"No description provided." }}</p>
             </div>
             
-            <div class="mt-6 pt-6 border-t border-gray-200 flex justify-between items-center">
-                <a href="{% url 'device' device.device_id %}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                    View Device Data
-                </a>
-                <button id="toggleDataPreview" class="text-blue-500 hover:text-blue-700 font-medium">
-                    Show Data Preview
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Device Type</h3>
+                <p>{{ device.get_device_type_display }}</p>
+            </div>
+        </div>
+        
+        <div class="divider">Connection Information</div>
+        
+        <div class="bg-base-200 p-4 rounded-box mb-6">
+            <h3 class="text-lg font-semibold mb-2">WebSocket URL</h3>
+            <div class="flex items-center gap-2">
+                <code class="bg-base-300 p-2 rounded flex-1 overflow-x-auto">
+                    ws://{{ request.get_host }}/ws/device/{{ device.id }}/
+                </code>
+                <button class="btn btn-sm btn-ghost" onclick="copyWsUrl()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                 </button>
             </div>
-            
-            <!-- Latest Data Section (Hidden by default) -->
-            <div id="dataPreviewSection" class="mt-8 border-t border-gray-200 pt-6 hidden">
-                <h4 class="text-lg font-medium text-gray-900 mb-4">Latest Data Preview</h4>
-                <div id="latest_data_content" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <p class="text-gray-500 col-span-full text-center py-4">Loading latest data...</p>
+        </div>
+        
+        <!-- WebSocket Communication Section -->
+        <div class="divider">Device Communication</div>
+        
+        <!-- Server Response Display -->
+        <div class="mb-4">
+            <label for="serverResponse" class="label">Server Response</label>
+            <div id="serverResponse" class="bg-base-200 p-3 h-32 overflow-y-auto rounded-box text-sm font-mono">
+                <p class="text-gray-500">Waiting for messages...</p>
+            </div>
+        </div>
+        
+        <!-- Message Input -->
+        <div class="join w-full">
+            <input type="text" id="messageInput" placeholder="Enter message to send to device" 
+                   class="input input-bordered join-item w-full" />
+            <button id="sendMessageBtn" class="btn btn-primary join-item">
+                Send
+            </button>
+        </div>
+        
+        <!-- GPIO Pins Section -->
+        <div class="divider">GPIO Pins</div>
+        
+        {% if gpio_pins %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {% for pin in gpio_pins %}
+            <div class="card bg-base-100 border">
+                <div class="card-body p-4">
+                    <h3 class="card-title text-sm">{{ pin.name }} (Pin {{ pin.pin }})</h3>
+                    <div class="flex items-center justify-between mt-2">
+                        <div class="form-control">
+                            <input type="checkbox" id="toggleButton{{ pin.pin }}" class="toggle toggle-primary" />
+                        </div>
+                        <a href="{% url 'delete_gpio_pin' pin.id %}" class="btn btn-xs btn-error">Delete</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Pin Number</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pin in gpio_pins %}
+                    <tr>
+                        <td>{{ pin.name }}</td>
+                        <td>{{ pin.pin }}</td>
+                        <td class="text-right">
+                            <a href="{% url 'delete_gpio_pin' pin.id %}" class="btn btn-xs btn-error">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>No GPIO pins configured for this device.</span>
+        </div>
+        {% endif %}
+        
+        <!-- Add GPIO Pin Form -->
+        <div class="divider">Add New GPIO Pin</div>
+        
+        <form method="post" action="{% url 'add_gpio_pin' %}" class="card bg-base-100 border">
+            <div class="card-body">
+                {% csrf_token %}
+                <input type="hidden" name="device" value="{{ device.id }}">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label for="id_name" class="label">Name</label>
+                        <input type="text" name="name" id="id_name" required class="input input-bordered w-full">
+                    </div>
+                    <div class="form-control">
+                        <label for="id_pin" class="label">Pin Number</label>
+                        <input type="number" name="pin" id="id_pin" required class="input input-bordered w-full">
+                    </div>
                 </div>
                 
-                <!-- Preview Chart -->
-                <div class="mt-4">
-                    <div id="preview_chart" class="h-64">
-                        <p class="text-gray-500 text-center py-4">Loading chart preview...</p>
-                    </div>
+                <div class="card-actions justify-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        Add Pin
+                    </button>
+                </div>
+            </div>
+        </form>
+        
+        <div class="divider"></div>
+        
+        <div class="flex justify-between items-center">
+            <a href="{% url 'device' device.device_id %}" class="btn btn-success">
+                View Device Data
+            </a>
+            <button id="toggleDataPreview" class="btn btn-ghost">
+                Hide Data Preview
+            </button>
+        </div>
+        
+        <!-- Latest Data Section (Visible by default) -->
+        <div id="dataPreviewSection" class="mt-8">
+            <div class="divider">Latest Data Preview</div>
+            <div id="latest_data_content" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="skeleton h-32 w-full"></div>
+                <div class="skeleton h-32 w-full"></div>
+            </div>
+            
+            <!-- Preview Chart -->
+            <div class="mt-4">
+                <div id="preview_chart" class="h-64 skeleton">
                 </div>
             </div>
         </div>
@@ -167,6 +207,16 @@
         const dataSection = document.getElementById('dataPreviewSection');
         let plotlyLoaded = false;
         let dataLoaded = false;
+        
+        // Load Plotly.js immediately
+        const script = document.createElement('script');
+        script.src = 'https://cdn.plot.ly/plotly-latest.min.js';
+        script.onload = function() {
+            plotlyLoaded = true;
+            fetchLatestData();
+            dataLoaded = true;
+        };
+        document.head.appendChild(script);
         
         // Set up message sending functionality
         const messageInput = document.getElementById('messageInput');
@@ -253,7 +303,7 @@
                 toggleButton.textContent = 'Hide Data Preview';
                 
                 if (!plotlyLoaded) {
-                    // Load Plotly.js dynamically
+                    // Load Plotly.js dynamically if not already loaded
                     const script = document.createElement('script');
                     script.src = 'https://cdn.plot.ly/plotly-latest.min.js';
                     script.onload = function() {
@@ -283,9 +333,9 @@
             
             if (data.length === 0) {
                 document.getElementById('latest_data_content').innerHTML = 
-                    '<p class="text-gray-500 col-span-full text-center py-4">No data available for this device yet.</p>';
+                    '<div class="alert alert-info col-span-full"><span>No data available for this device yet.</span></div>';
                 document.getElementById('preview_chart').innerHTML = 
-                    '<p class="text-gray-500 text-center py-4">No data available to display chart.</p>';
+                    '<div class="alert alert-info"><span>No data available to display chart.</span></div>';
                 return;
             }
             
@@ -310,11 +360,13 @@
                 const latestValue = sortedData[0].value;
                 
                 const dataCard = document.createElement('div');
-                dataCard.className = 'p-3 border-b border-gray-200';
+                dataCard.className = 'stats shadow';
                 dataCard.innerHTML = `
-                    <h5 class="text-sm font-medium text-gray-500">${label}</h5>
-                    <p class="text-xl font-bold text-gray-900 mt-1">${latestValue}</p>
-                    <p class="text-xs text-gray-500 mt-1">Last updated: ${new Date(sortedData[0].date_time).toLocaleString()}</p>
+                    <div class="stat">
+                        <div class="stat-title">${label}</div>
+                        <div class="stat-value">${latestValue}</div>
+                        <div class="stat-desc">Last updated: ${new Date(sortedData[0].date_time).toLocaleString()}</div>
+                    </div>
                 `;
                 latestDataContent.appendChild(dataCard);
             });
@@ -336,7 +388,7 @@
                     mode: 'lines+markers',
                     name: firstLabel,
                     line: {
-                        color: '#3B82F6',
+                        color: '#570df8', // primary color
                         width: 2
                     },
                     marker: {
@@ -383,8 +435,20 @@
         } catch (error) {
             console.error("Error fetching latest data:", error);
             document.getElementById('latest_data_content').innerHTML = 
-                '<p class="text-gray-500 col-span-full text-center py-4">Error loading data. Please try again later.</p>';
+                '<div class="alert alert-error col-span-full"><span>Error loading data. Please try again later.</span></div>';
         }
+    }
+
+    function copyApiKey() {
+        navigator.clipboard.writeText("{{ device.api_key }}").then(function() {
+            alert("API Key copied to clipboard!");
+        });
+    }
+    
+    function copyWsUrl() {
+        navigator.clipboard.writeText("ws://{{ request.get_host }}/ws/device/{{ device.id }}/").then(function() {
+            alert("WebSocket URL copied to clipboard!");
+        });
     }
 </script>
 {% endblock content %} 

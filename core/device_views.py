@@ -54,7 +54,7 @@ class DeviceUpdateView(LoginRequiredMixin, UpdateView):
         return Device.objects.filter(owner=self.request.user)
     
     def get_success_url(self):
-        return reverse_lazy('device_detail', kwargs={'pk': self.object.device_id})
+        return reverse_lazy('device', kwargs={'pk': self.object.device_id})
     
     def form_valid(self, form):
         messages.success(self.request, 'Device updated successfully!')

@@ -50,7 +50,7 @@ def add_gpio_pin(request):
             gpio_pin.save()
             
             messages.success(request, f'GPIO Pin "{gpio_pin.name}" added successfully!')
-            return redirect('device_detail', pk=device_id)
+            return redirect('device', pk=device_id)
     else:
         form = GPIOPinForm()
     
@@ -68,7 +68,7 @@ def delete_gpio_pin(request, pk):
     device_id = gpio_pin.device.id
     gpio_pin.delete()
     messages.success(request, f'GPIO Pin deleted successfully!')
-    return redirect('device_detail', pk=device_id)
+    return redirect('device', pk=device_id)
 
 class GPIOPinCreateView(DeviceOwnershipMixin, CreateView):
     model = GPIOOutputPin
@@ -85,12 +85,12 @@ class GPIOPinCreateView(DeviceOwnershipMixin, CreateView):
         
         gpio_pin = form.save()
         messages.success(self.request, f'GPIO Pin "{gpio_pin.name}" added successfully!')
-        return redirect('device_detail', pk=device.id)
+        return redirect('device', pk=device.id)
     
     def form_invalid(self, form):
         messages.error(self.request, "Error adding GPIO pin. Please check the form.")
         if 'device' in form.cleaned_data:
-            return redirect('device_detail', pk=form.cleaned_data['device'].id)
+            return redirect('device', pk=form.cleaned_data['device'].id)
         return redirect('device_list')
 
 class GPIOPinDeleteView(GPIOPinOwnershipMixin, DeleteView):
@@ -98,7 +98,7 @@ class GPIOPinDeleteView(GPIOPinOwnershipMixin, DeleteView):
     
     def get_success_url(self):
         device_id = self.object.device.id
-        return reverse_lazy('device_detail', kwargs={'pk': device_id})
+        return reverse_lazy('device', kwargs={'pk': device_id})
     
     def delete(self, request, *args, **kwargs):
         gpio_pin = self.get_object()
