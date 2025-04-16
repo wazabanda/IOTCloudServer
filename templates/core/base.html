@@ -30,7 +30,10 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
                         </svg>
                     </label>
-                    <a href="{% url 'home-view' %}" class="btn btn-ghost normal-case text-xl">IOT Cloud Server</a>
+                    <a href="{% url 'home-view' %}" class="btn btn-ghost normal-case text-xl">
+                        <img src="{% static 'img/logo.png' %}" alt="Mega Things Logo" class="h-8 mr-2">
+                        Mega Things
+                    </a>
                 </div>
                 <div class="navbar-center">
                     <!-- Theme toggle -->
@@ -101,18 +104,20 @@
     
     <script>
         // Theme toggle functionality
+        const light_theme = 'nord';
+        const dark_theme = 'business';
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggle = document.getElementById('theme-toggle');
             const html = document.documentElement;
             
             // Check for saved theme
-            const savedTheme = localStorage.getItem('theme') || 'nord';
+            const savedTheme = localStorage.getItem('theme') || light_theme;
             html.setAttribute('data-theme', savedTheme);
-            themeToggle.checked = savedTheme === 'night';
+            themeToggle.checked = savedTheme === dark_theme;
             
             // Listen for theme toggle changes
             themeToggle.addEventListener('change', function() {
-                const theme = this.checked ? 'night' : 'nord';
+                const theme = this.checked ? dark_theme : light_theme;
                 html.setAttribute('data-theme', theme);
                 localStorage.setItem('theme', theme);
             });

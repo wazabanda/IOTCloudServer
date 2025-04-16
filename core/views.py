@@ -10,14 +10,39 @@ from .mixins import DeviceOwnershipMixin, GPIOPinOwnershipMixin
 # Create your views here.
 
 
-class HomeView(LoginRequiredMixin,View):
+class HomeView(LoginRequiredMixin, View):
     
-    def get(self,request):
+    def get(self, request):
+        if request.user.is_anonymous:
+            return render(request, 'core/index.html', {})
+            
+        devices = Device.objects.filter(owner=request.user)
+        
+        # Calculate statistics
+        total_devices = devices.count()
+        active_devices = devices.filter(is_active=True).count()
+        inactive_devices = total_devices - active_devices
+        
+        # Get the most recently updated device
+        latest_device = devices.order_by('-last_seen').first()
+        
+        # Get recent logs
+        recent_logs = NumericalLog.objects.filter(
+            device__owner=request.user
+        ).order_by('-date_time')[:5]
+        
         context = {
-            "devices":Device.objects.filter(owner=request.user) if not request.user.is_anonymous else None
+            "devices": devices,
+            "stats": {
+                "total_devices": total_devices,
+                "active_devices": active_devices,
+                "inactive_devices": inactive_devices,
+                "latest_device": latest_device,
+            },
+            "recent_logs": recent_logs
         }
         
-        return render(request,'core/index.html',context)
+        return render(request, 'core/index.html', context)
 
 
 class DeviceData(DeviceOwnershipMixin, View):
@@ -36,39 +61,6 @@ class DeviceData(DeviceOwnershipMixin, View):
 
 
 
-
-@login_required
-def add_gpio_pin(request):
-    if request.method == 'POST':
-        form = GPIOPinForm(request.POST)
-        if form.is_valid():
-            device_id = form.cleaned_data['device'].id
-            device = get_object_or_404(Device, id=device_id, owner=request.user)
-            
-            gpio_pin = form.save(commit=False)
-            gpio_pin.device = device
-            gpio_pin.save()
-            
-            messages.success(request, f'GPIO Pin "{gpio_pin.name}" added successfully!')
-            return redirect('device', pk=device_id)
-    else:
-        form = GPIOPinForm()
-    
-    return redirect('device_list')
-
-@login_required
-def delete_gpio_pin(request, pk):
-    gpio_pin = get_object_or_404(GPIOOutputPin, pk=pk)
-    
-    # Ensure the user owns the device this pin belongs to
-    if gpio_pin.device.owner != request.user:
-        messages.error(request, "You don't have permission to delete this pin.")
-        return redirect('device_list')
-    
-    device_id = gpio_pin.device.id
-    gpio_pin.delete()
-    messages.success(request, f'GPIO Pin deleted successfully!')
-    return redirect('device', pk=device_id)
 
 class GPIOPinCreateView(DeviceOwnershipMixin, CreateView):
     model = GPIOOutputPin

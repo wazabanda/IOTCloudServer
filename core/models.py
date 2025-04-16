@@ -40,11 +40,21 @@ class Device(models.Model):
 
     device_name = models.CharField("name", max_length=50)
     owner = models.ForeignKey(User, verbose_name="Owner", on_delete=models.CASCADE)
-    device_id = models.UUIDField("Device ID",default=uuid.uuid4,unique=True,editable=False)
+    device_id = models.UUIDField("Device ID", default=uuid.uuid4, unique=True, editable=False)
+    is_active = models.BooleanField("Active Status", default=False)
+    last_seen = models.DateTimeField("Last Seen", null=True, blank=True)
+    
     def __str__(self):
         return self.device_name
     
-    
+    @property
+    def is_online(self):
+        if not self.last_seen:
+            return False
+        # Consider a device online if it was seen in the last 5 minutes
+        return (timezone.now() - self.last_seen).total_seconds() < 300
+
+
 class ApiKey(models.Model):
 
 

@@ -6,7 +6,7 @@ from crispy_forms.layout import Submit, Layout, Field
 class DeviceForm(forms.ModelForm):
     class Meta:
         model = Device
-        fields = ['device_name']
+        fields = ['device_name','is_active']
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

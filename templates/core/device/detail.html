@@ -31,9 +31,9 @@
             </div>
             
             <div class="stat">
-                <div class="stat-title">API Key</div>
+                <div class="stat-title">Device ID</div>
                 <div class="stat-value text-lg flex items-center gap-2">
-                    <span class="text-sm font-mono truncate max-w-xs">{{ device.api_key }}</span>
+                    <span class="text-sm font-mono truncate max-w-xs">{{ device.device_id }}</span>
                     <button class="btn btn-sm btn-ghost" onclick="copyApiKey()">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -63,7 +63,7 @@
             <h3 class="text-lg font-semibold mb-2">WebSocket URL</h3>
             <div class="flex items-center gap-2">
                 <code class="bg-base-300 p-2 rounded flex-1 overflow-x-auto">
-                    ws://{{ request.get_host }}/ws/device/{{ device.id }}/
+                    ws://{{ request.get_host }}/ws/device/{{ device.device_id }}
                 </code>
                 <button class="btn btn-sm btn-ghost" onclick="copyWsUrl()">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -444,8 +444,8 @@
     }
 
     function copyApiKey() {
-        navigator.clipboard.writeText("{{ device.api_key }}").then(function() {
-            alert("API Key copied to clipboard!");
+        navigator.clipboard.writeText("{{ device.device_id }}").then(function() {
+            alert("Device ID copied to clipboard!");
         });
     }
     
