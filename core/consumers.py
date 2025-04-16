@@ -30,8 +30,10 @@ class DeviceConsumer(AsyncWebsocketConsumer):
         message_type = data['type']
 
         if message_type == 'device.message':
+            print(data)
             await self.send_to_group_device(data['message'],message_type)
         elif message_type == 'pin.message':
+            print(data)
             await self.send_to_group_pin(data['message'],message_type,data['pin'],data['state'])
 
     async def send_to_group_device(self, message,msg_type):

@@ -1,0 +1,390 @@
+{% extends "core/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    {{ device.device_name }}
+                </h3>
+                <div class="flex space-x-2">
+                    <a href="{% url 'device_update' device.id %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
+                        Edit
+                    </a>
+                    <a href="{% url 'device_delete' device.id %}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">
+                        Delete
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Device ID</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ device.device_id }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Owner</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ device.owner.username }}</dd>
+                    </div>
+                </dl>
+            </div>
+            
+            <!-- WebSocket Communication Section -->
+            <div class="mt-8 border-t border-gray-200 pt-6">
+                <h4 class="text-lg font-medium text-gray-900 mb-4">Device Communication</h4>
+                
+                <!-- Server Response Display -->
+                <div class="mb-4">
+                    <label for="serverResponse" class="block text-sm font-medium text-gray-700 mb-2">Server Response</label>
+                    <div id="serverResponse" class="bg-gray-50 p-3 h-32 overflow-y-auto border border-gray-200 rounded-md text-sm font-mono">
+                        <p class="text-gray-500">Waiting for messages...</p>
+                    </div>
+                </div>
+                
+                <!-- Message Input -->
+                <div class="flex space-x-2">
+                    <div class="flex-grow">
+                        <input type="text" id="messageInput" placeholder="Enter message to send to device" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button id="sendMessageBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Send
+                    </button>
+                </div>
+            </div>
+            
+            <!-- GPIO Pins Section -->
+            <div class="mt-8 border-t border-gray-200 pt-6">
+                <h4 class="text-lg font-medium text-gray-900 mb-4">GPIO Pins</h4>
+                
+                {% if gpio_pins %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    {% for pin in gpio_pins %}
+                    <div class="p-4 border-b border-gray-200">
+                        <p class="font-medium text-gray-900">{{ pin.name }} (Pin {{ pin.pin }})</p>
+                        <div class="flex items-center mt-2">
+                            <input type="checkbox" id="toggleButton{{ pin.pin }}" class="hidden">
+                            <label for="toggleButton{{ pin.pin }}" class="cursor-pointer">
+                                <div id="toggleButtonContainer{{ pin.pin }}" class="w-12 h-6 bg-gray-300 rounded-full p-1 duration-300 ease-in-out">
+                                    <div id="toggleIndicator{{ pin.pin }}" class="bg-white w-5 h-5 rounded-full shadow-md transform translate-x-0 duration-300 ease-in-out"></div>
+                                </div>
+                            </label>
+                            <a href="{% url 'delete_gpio_pin' pin.id %}" class="ml-4 text-red-600 hover:text-red-900 text-sm">Delete</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pin Number</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for pin in gpio_pins %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pin.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ pin.pin }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{% url 'delete_gpio_pin' pin.id %}" class="text-red-600 hover:text-red-900">Delete</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500">No GPIO pins configured for this device.</p>
+                {% endif %}
+                
+                <!-- Add GPIO Pin Form -->
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <h5 class="text-md font-medium text-gray-900 mb-3">Add New GPIO Pin</h5>
+                    <form method="post" action="{% url 'add_gpio_pin' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="device" value="{{ device.id }}">
+                        
+                        <div class="grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-4">
+                            <div>
+                                <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
+                                <input type="text" name="name" id="id_name" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="id_pin" class="block text-sm font-medium text-gray-700">Pin Number</label>
+                                <input type="number" name="pin" id="id_pin" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                Add Pin
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-gray-200 flex justify-between items-center">
+                <a href="{% url 'device' device.device_id %}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    View Device Data
+                </a>
+                <button id="toggleDataPreview" class="text-blue-500 hover:text-blue-700 font-medium">
+                    Show Data Preview
+                </button>
+            </div>
+            
+            <!-- Latest Data Section (Hidden by default) -->
+            <div id="dataPreviewSection" class="mt-8 border-t border-gray-200 pt-6 hidden">
+                <h4 class="text-lg font-medium text-gray-900 mb-4">Latest Data Preview</h4>
+                <div id="latest_data_content" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <p class="text-gray-500 col-span-full text-center py-4">Loading latest data...</p>
+                </div>
+                
+                <!-- Preview Chart -->
+                <div class="mt-4">
+                    <div id="preview_chart" class="h-64">
+                        <p class="text-gray-500 text-center py-4">Loading chart preview...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include WebSocket functionality -->
+{% include "core/socket.html" %}
+
+<!-- Load Plotly.js only when needed -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.getElementById('toggleDataPreview');
+        const dataSection = document.getElementById('dataPreviewSection');
+        let plotlyLoaded = false;
+        let dataLoaded = false;
+        
+        // Set up message sending functionality
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const serverResponse = document.getElementById('serverResponse');
+        
+        if (sendMessageBtn && messageInput) {
+            sendMessageBtn.addEventListener('click', function() {
+                const message = messageInput.value.trim();
+                if (message && typeof socket !== 'undefined' && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({
+                        type: 'device.message',
+                        message: message
+                    }));
+                    messageInput.value = '';
+                }
+            });
+            
+            // Allow sending with Enter key
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessageBtn.click();
+                }
+            });
+        }
+        
+    
+        
+        // Handle WebSocket messages
+        if (typeof socket !== 'undefined') {
+            // Function to add message to server response display
+            function addMessageToDisplay(message, type = 'info') {
+                const messageElement = document.createElement('div');
+                messageElement.className = type === 'error' ? 'text-red-500' : 'text-gray-800';
+                messageElement.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+                
+                // Clear "waiting for messages" text if it's the first message
+                if (serverResponse.querySelector('.text-gray-500')) {
+                    serverResponse.innerHTML = '';
+                }
+                
+                serverResponse.appendChild(messageElement);
+                serverResponse.scrollTop = serverResponse.scrollHeight;
+            }
+            
+            socket.addEventListener('open', function() {
+                addMessageToDisplay('Connected to device');
+            });
+            
+            socket.addEventListener('close', function() {
+                addMessageToDisplay('Disconnected from device', 'error');
+            });
+            
+            socket.addEventListener('error', function() {
+                addMessageToDisplay('Connection error', 'error');
+            });
+            
+            socket.addEventListener('message', function(event) {
+                const data = JSON.parse(event.data);
+                
+                // Handle different message types
+                if (data.type === 'device.message') {
+                    addMessageToDisplay(`Device: ${data.message}`);
+                } else if (data.type === 'pin.message') {
+                    const pin = data.pin;
+                    const state = data.state;
+                    addMessageToDisplay(`Pin ${pin} state changed to ${state}`);
+                    
+                    // Update toggle button state if needed
+                    const toggleButton = document.getElementById(`toggleButton${pin}`);
+                    if (toggleButton) {
+                        toggleButton.checked = state === 'on';
+                        const event = new Event('change');
+                        toggleButton.dispatchEvent(event);
+                    }
+                }
+            });
+        }
+        
+        // Data preview toggle functionality
+        toggleButton.addEventListener('click', function() {
+            if (dataSection.classList.contains('hidden')) {
+                dataSection.classList.remove('hidden');
+                toggleButton.textContent = 'Hide Data Preview';
+                
+                if (!plotlyLoaded) {
+                    // Load Plotly.js dynamically
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.plot.ly/plotly-latest.min.js';
+                    script.onload = function() {
+                        plotlyLoaded = true;
+                        if (!dataLoaded) {
+                            fetchLatestData();
+                            dataLoaded = true;
+                        }
+                    };
+                    document.head.appendChild(script);
+                } else if (!dataLoaded) {
+                    fetchLatestData();
+                    dataLoaded = true;
+                }
+            } else {
+                dataSection.classList.add('hidden');
+                toggleButton.textContent = 'Show Data Preview';
+            }
+        });
+    });
+    
+    // Function to fetch the latest data for this device
+    async function fetchLatestData() {
+        try {
+            const response = await fetch(`/api/core/device_logs/{{ device.device_id }}?limit=10`);
+            const data = await response.json();
+            
+            if (data.length === 0) {
+                document.getElementById('latest_data_content').innerHTML = 
+                    '<p class="text-gray-500 col-span-full text-center py-4">No data available for this device yet.</p>';
+                document.getElementById('preview_chart').innerHTML = 
+                    '<p class="text-gray-500 text-center py-4">No data available to display chart.</p>';
+                return;
+            }
+            
+            // Group data by label
+            const groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.data_label]) {
+                    groupedData[item.data_label] = [];
+                }
+                groupedData[item.data_label].push(item);
+            });
+            
+            // Display latest values
+            const latestDataContent = document.getElementById('latest_data_content');
+            latestDataContent.innerHTML = '';
+            
+            Object.keys(groupedData).forEach(label => {
+                // Sort by date and get the latest
+                const sortedData = groupedData[label].sort((a, b) => 
+                    new Date(b.date_time) - new Date(a.date_time)
+                );
+                const latestValue = sortedData[0].value;
+                
+                const dataCard = document.createElement('div');
+                dataCard.className = 'p-3 border-b border-gray-200';
+                dataCard.innerHTML = `
+                    <h5 class="text-sm font-medium text-gray-500">${label}</h5>
+                    <p class="text-xl font-bold text-gray-900 mt-1">${latestValue}</p>
+                    <p class="text-xs text-gray-500 mt-1">Last updated: ${new Date(sortedData[0].date_time).toLocaleString()}</p>
+                `;
+                latestDataContent.appendChild(dataCard);
+            });
+            
+            // Create preview chart with the first data label
+            const firstLabel = Object.keys(groupedData)[0];
+            if (firstLabel) {
+                const chartData = groupedData[firstLabel].sort((a, b) => 
+                    new Date(a.date_time) - new Date(b.date_time)
+                );
+                
+                const timestamps = chartData.map(entry => new Date(entry.date_time));
+                const values = chartData.map(entry => entry.value);
+                
+                const trace = {
+                    x: timestamps,
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: firstLabel,
+                    line: {
+                        color: '#3B82F6',
+                        width: 2
+                    },
+                    marker: {
+                        size: 5
+                    }
+                };
+                
+                const layout = {
+                    title: {
+                        text: `${firstLabel} (Recent Readings)`,
+                        font: {
+                            family: 'Arial, sans-serif',
+                            size: 16,
+                            color: '#333'
+                        }
+                    },
+                    xaxis: {
+                        showgrid: true,
+                        gridcolor: '#e5e5e5'
+                    },
+                    yaxis: {
+                        showgrid: true,
+                        gridcolor: '#e5e5e5'
+                    },
+                    margin: {
+                        l: 40,
+                        r: 20,
+                        t: 40,
+                        b: 40
+                    },
+                    plot_bgcolor: '#fff',
+                    paper_bgcolor: '#fff',
+                    hovermode: 'closest'
+                };
+                
+                const config = {
+                    responsive: true,
+                    displayModeBar: false
+                };
+                
+                Plotly.newPlot('preview_chart', [trace], layout, config);
+            }
+            
+        } catch (error) {
+            console.error("Error fetching latest data:", error);
+            document.getElementById('latest_data_content').innerHTML = 
+                '<p class="text-gray-500 col-span-full text-center py-4">Error loading data. Please try again later.</p>';
+        }
+    }
+</script>
+{% endblock content %} 

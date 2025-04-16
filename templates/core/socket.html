@@ -1,79 +1,181 @@
-
+<!-- WebSocket Connection Script -->
 <script>
-    // Establishing a WebSocket connection
+    // Initialize WebSocket connection
+    const deviceId = '{{ device.device_id }}';
     const baseHostUrl =  window.location.hostname + (window.location.port ? ':' + window.location.port : '');
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const socket = new WebSocket(`${protocol}://${baseHostUrl}/ws/devices/302782f5-f1f9-4986-a7ce-b3313b38740d`);
-
-    function sendGpioMessage(pin,state)
-    {
-      const dataToSend = JSON.stringify({message:"Toggle pin",pin:pin,state:state,type:"pin.message"});
-      socket.send(dataToSend);
-    }
-    {% comment %} document.getElementById('sendButton').addEventListener('click', () => {
-          const dataToSend = JSON.stringify({message:`Hello, server! ${new Date()}`, type:"device.message"});
-          socket.send(dataToSend);
-      }); {% endcomment %}
-    // Connection opened
-    socket.addEventListener('open', (event) => {
-        console.log('WebSocket connection opened:', event);
-    });
-  
-    // Listen for messages
-    socket.addEventListener('message', (event) => {
-          const serverResponseDiv = document.getElementById('serverResponse');
-          serverResponseDiv.innerHTML = 'Server Response: ' + event.data;
-          var data = JSON.parse(event.data);
-          if(data.type === 'pin.message'){
-              const toggleButton = document.getElementById(`toggleButton${data.pin}`);
-              const toggleIndicator = document.getElementById(`toggleIndicator${data.pin}`);
-              const toggleButtonContainer = document.getElementById(`toggleButtonContainer${data.pin}`);
-  
-              toggleButton.checked = data.state;
-              const isChecked = data.state;
-              const translationValue = isChecked ? '6' : '0';
-              const translationValueO = !isChecked ? '6' : '0';
-            
-              toggleIndicator.classList.remove(`translate-x-${translationValueO}`);
-              toggleIndicator.classList.add(`translate-x-${translationValue}`);
-  
-              if (isChecked) {
-                toggleButtonContainer.classList.add('custom-background');
-              } else {
-                toggleButtonContainer.classList.remove('custom-background');
-              }
+    const socket = new WebSocket(`${protocol}://${baseHostUrl}/ws/devices/${deviceId}`);
     
-          }
-      });
-  
-    // Connection closed
-    socket.addEventListener('close', (event) => {
-        console.log('WebSocket connection closed:', event);
+    // Server response display element
+    const serverResponse = document.getElementById('serverResponse');
+    
+    // Message input and send button
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    
+    // GPIO pin toggle buttons
+    const toggleButtons = document.querySelectorAll('[id^="toggleButton"]');
+    
+    // Track current pin states
+    const pinStates = {};
+    
+    // Function to add message to server response display
+    function addMessageToDisplay(message, type = 'info') {
+        if (!serverResponse) return;
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = type === 'error' ? 'text-red-500' : 'text-gray-800';
+        messageElement.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+        
+        // Clear "waiting for messages" text if it's the first message
+        if (serverResponse.querySelector('.text-gray-500')) {
+            serverResponse.innerHTML = '';
+        }
+        
+        serverResponse.appendChild(messageElement);
+        serverResponse.scrollTop = serverResponse.scrollHeight;
+    }
+    
+    // Set up message sending functionality
+    if (sendMessageBtn && messageInput) {
+        sendMessageBtn.addEventListener('click', function() {
+            const message = messageInput.value.trim();
+            if (message && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'device.message',
+                    message: message
+                }));
+                messageInput.value = '';
+                addMessageToDisplay(`You: ${message}`);
+            }
+        });
+        
+        // Allow sending with Enter key
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessageBtn.click();
+            }
+        });
+    }
+    
+    // Set up GPIO pin toggle buttons
+    toggleButtons.forEach(button => {
+        const pin = button.id.replace('toggleButton', '');
+        const container = document.getElementById(`toggleButtonContainer${pin}`);
+        const indicator = document.getElementById(`toggleIndicator${pin}`);
+        
+        // Initialize pin state tracking
+        pinStates[pin] = button.checked ? 'on' : 'off';
+        
+        if (button && container && indicator) {
+            button.addEventListener('change', function() {
+                const isChecked = this.checked;
+                const newState = isChecked ? 'on' : 'off';
+                
+                // Only send message if state has actually changed
+                if (pinStates[pin] !== newState) {
+                    pinStates[pin] = newState;
+                    
+                    if (isChecked) {
+                        container.classList.add('bg-green-500');
+                        container.classList.remove('bg-gray-300');
+                        indicator.classList.add('translate-x-6');
+                    } else {
+                        container.classList.remove('bg-green-500');
+                        container.classList.add('bg-gray-300');
+                        indicator.classList.remove('translate-x-6');
+                    }
+                    
+                    // Send WebSocket message to change pin state
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({
+                            type: 'pin.message',
+                            message: 'toggle',
+                            pin: parseInt(pin),
+                            state: newState
+                        }));
+                        
+                        addMessageToDisplay(`Set Pin ${pin} to ${newState}`);
+                    }
+                }
+            });
+        }
     });
-  
-  
-    {% for pin in gpiopins %}
-    const toggleButton{{ pin.pin }} = document.getElementById('toggleButton{{ pin.pin }}');
-    const toggleIndicator{{ pin.pin }} = document.getElementById('toggleIndicator{{ pin.pin }}');
-    const toggleButtonContainer{{ pin.pin }} = document.getElementById('toggleButtonContainer{{ pin.pin }}');
-  
-    toggleButton{{ pin.pin }}.addEventListener('change', () => {
-      const isChecked = toggleButton{{ pin.pin }}.checked;
-      const translationValue = isChecked ? '6' : '0';
-      const translationValueO = !isChecked ? '6' : '0';
-      sendGpioMessage({{ pin.pin }},isChecked)
-      toggleIndicator{{ pin.pin }}.classList.remove(`translate-x-${translationValueO}`);
-      toggleIndicator{{ pin.pin }}.classList.add(`translate-x-${translationValue}`);
-  
-      if (isChecked) {
-        toggleButtonContainer{{ pin.pin }}.classList.add('custom-background');
-      } else {
-        toggleButtonContainer{{ pin.pin }}.classList.remove('custom-background');
-      }
+    
+    // WebSocket event handlers
+    socket.addEventListener('open', function() {
+        addMessageToDisplay('Connected to device');
+        console.log('WebSocket connection established');
     });
-  {% endfor %}
-  
-      
-    </script>
+    
+    socket.addEventListener('close', function() {
+        addMessageToDisplay('Disconnected from device', 'error');
+        console.log('WebSocket connection closed');
+    });
+    
+    socket.addEventListener('error', function() {
+        addMessageToDisplay('Connection error', 'error');
+        console.error('WebSocket error occurred');
+    });
+    
+    socket.addEventListener('message', function(event) {
+        const data = JSON.parse(event.data);
+        
+        // Handle different message types
+        if (data.type === 'device.message') {
+            addMessageToDisplay(`Device: ${data.message}`);
+            console.log('Received device message:', data.message);
+        } else if (data.type === 'pin.message') {
+            const pin = data.pin;
+            const state = data.state;
+            
+            // Only update UI and log if state has actually changed
+            if (pinStates[pin] !== state) {
+                pinStates[pin] = state;
+                addMessageToDisplay(`Pin ${pin} state changed to ${state}`);
+                console.log(`Pin ${pin} state changed to ${state}`);
+                
+                // Update toggle button state if needed
+                const toggleButton = document.getElementById(`toggleButton${pin}`);
+                if (toggleButton) {
+                    toggleButton.checked = state === 'on';
+                    
+                    // Update the visual state of the toggle
+                    const container = document.getElementById(`toggleButtonContainer${pin}`);
+                    const indicator = document.getElementById(`toggleIndicator${pin}`);
+                    
+                    if (container && indicator) {
+                        if (state === 'on') {
+                            container.classList.add('bg-green-500');
+                            container.classList.remove('bg-gray-300');
+                            indicator.classList.add('translate-x-6');
+                        } else {
+                            container.classList.remove('bg-green-500');
+                            container.classList.add('bg-gray-300');
+                            indicator.classList.remove('translate-x-6');
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Initialize toggle button states based on their current appearance
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleButtons.forEach(button => {
+            const pin = button.id.replace('toggleButton', '');
+            const container = document.getElementById(`toggleButtonContainer${pin}`);
+            
+            // If the container has the green background class, the toggle is on
+            if (container && container.classList.contains('bg-green-500')) {
+                button.checked = true;
+                pinStates[pin] = 'on';
+            } else {
+                button.checked = false;
+                pinStates[pin] = 'off';
+            }
+        });
+    });
+</script>
   
   
