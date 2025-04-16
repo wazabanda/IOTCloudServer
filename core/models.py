@@ -65,6 +65,7 @@ class ApiKey(models.Model):
     owner = models.ForeignKey(User, verbose_name="Owner", on_delete=models.CASCADE)
     key = models.CharField("Key", max_length=64,default=secrets.token_urlsafe)
     expiry = models.DateTimeField("Expiry Date", default=timezone.now)
+    never_expires = models.BooleanField("Never Expires", default=False)
     def __str__(self):
         return self.owner.username
 
