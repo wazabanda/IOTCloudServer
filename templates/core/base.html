@@ -117,6 +117,36 @@
                 localStorage.setItem('theme', theme);
             });
         });
+
+        // Form validation styling
+        document.addEventListener('DOMContentLoaded', function() {
+            const formInputs = document.querySelectorAll('.input, .select, .textarea, .checkbox, .radio');
+            
+            formInputs.forEach(input => {
+                // Add focus styling
+                input.addEventListener('focus', function() {
+                    this.classList.add('input-primary');
+                });
+                
+                // Remove focus styling
+                input.addEventListener('blur', function() {
+                    this.classList.remove('input-primary');
+                    
+                    // Add success/error styling based on validity
+                    if (this.value) {
+                        if (this.checkValidity()) {
+                            this.classList.add('input-success');
+                            this.classList.remove('input-error');
+                        } else {
+                            this.classList.add('input-error');
+                            this.classList.remove('input-success');
+                        }
+                    } else {
+                        this.classList.remove('input-success', 'input-error');
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>

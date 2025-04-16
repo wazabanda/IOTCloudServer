@@ -1,0 +1,50 @@
+{% load widget_tweaks %}
+
+{% for field in form %}
+<div class="form-control w-full mb-4">
+    <label class="label" for="{{ field.id_for_label }}">
+        <span class="label-text font-medium">{{ field.label }}</span>
+        {% if field.field.required %}
+        <span class="label-text-alt text-error">*</span>
+        {% endif %}
+    </label>
+    
+    {% if field.field.widget.input_type == 'checkbox' %}
+        <div class="flex items-center gap-2 mt-2">
+            {% render_field field class="checkbox checkbox-primary" %}
+            <span class="label-text">{{ field.help_text }}</span>
+        </div>
+    {% elif field.field.widget.input_type == 'select' %}
+        {% render_field field class="select select-bordered w-full" %}
+    {% elif field.field.widget.input_type == 'textarea' %}
+        {% render_field field class="textarea textarea-bordered w-full" rows="4" %}
+    {% elif field.field.widget.input_type == 'file' %}
+        <div class="mt-2">
+            {% render_field field class="file-input file-input-bordered w-full" %}
+        </div>
+    {% elif field.field.widget.input_type == 'radio' %}
+        <div class="mt-2">
+            {% for choice in field %}
+            <label class="label cursor-pointer justify-start gap-2">
+                {{ choice.tag }}
+                <span class="label-text">{{ choice.choice_label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    {% else %}
+        {% render_field field class="input input-bordered w-full" placeholder=field.label %}
+    {% endif %}
+    
+    {% if field.help_text and field.field.widget.input_type != 'checkbox' %}
+    <label class="label">
+        <span class="label-text-alt text-base-content/70">{{ field.help_text }}</span>
+    </label>
+    {% endif %}
+    
+    {% if field.errors %}
+    <label class="label">
+        <span class="label-text-alt text-error">{{ field.errors|join:", " }}</span>
+    </label>
+    {% endif %}
+</div>
+{% endfor %} 
