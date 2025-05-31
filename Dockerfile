@@ -45,7 +45,7 @@ USER appuser
 COPY . .
 
 # Expose the port that the application listens on.
-EXPOSE 8000
+EXPOSE 8030
 
 # Run the application.
-CMD  daphne -b 0.0.0.0 -p 8000 IOTCloudServer.asgi:application
+CMD daphne 'IOTCloudServer.asgi:application' --bind=0.0.0.0:8030
