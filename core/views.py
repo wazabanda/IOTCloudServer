@@ -80,7 +80,7 @@ class GPIOPinCreateView(DeviceOwnershipMixin, CreateView):
         
         gpio_pin = form.save()
         messages.success(self.request, f'GPIO Pin "{gpio_pin.name}" added successfully!')
-        return redirect('device', pk=device.id)
+        return redirect('device', pk=device.device_id)
     
     def form_invalid(self, form):
         messages.error(self.request, "Error adding GPIO pin. Please check the form.")
@@ -92,12 +92,12 @@ class GPIOPinDeleteView(GPIOPinOwnershipMixin, DeleteView):
     model = GPIOOutputPin
     
     def get_success_url(self):
-        device_id = self.object.device.id
+        device_id = self.object.device.device_id
         return reverse_lazy('device', kwargs={'pk': device_id})
     
     def delete(self, request, *args, **kwargs):
         gpio_pin = self.get_object()
-        device_id = gpio_pin.device.id
+        device_id = gpio_pin.device.device_id
         messages.success(request, f'GPIO Pin "{gpio_pin.name}" deleted successfully!')
         return super().delete(request, *args, **kwargs)
 
@@ -182,7 +182,8 @@ class ProfileView(LoginRequiredMixin, View):
                 messages.success(request, 'New API key has been created.')
                 return redirect('profile')
             else:
-                messages.error(request, 'Please correct the errors below.')
+                messages.error(request, f'Please correct the errors below: {api_key_form.errors}')
+                print(api_key_form.errors)
         
         # If we get here, there was an error, so re-render the page with the appropriate form
         return self.get(request)

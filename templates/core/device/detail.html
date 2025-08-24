@@ -63,7 +63,7 @@
             <h3 class="text-lg font-semibold mb-2">WebSocket URL</h3>
             <div class="flex items-center gap-2">
                 <code class="bg-base-300 p-2 rounded flex-1 overflow-x-auto">
-                    ws://{{ request.get_host }}/ws/device/{{ device.device_id }}
+                    ws://{{ request.get_host }}/ws/devices/{{ device.device_id }}
                 </code>
                 <button class="btn btn-sm btn-ghost" onclick="copyWsUrl()">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -538,7 +538,7 @@
     }
     
     function copyWsUrl() {
-        navigator.clipboard.writeText("ws://{{ request.get_host }}/ws/device/{{ device.id }}/").then(function() {
+        navigator.clipboard.writeText("ws://{{ request.get_host }}/ws/devices/{{ device.device_id }}/").then(function() {
             alert("WebSocket URL copied to clipboard!");
         });
     }

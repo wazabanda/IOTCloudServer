@@ -106,10 +106,7 @@ class ApiKeyForm(forms.ModelForm):
         never_expires = cleaned_data.get('never_expires')
         expiry_days = cleaned_data.get('expiry_days')
         
-        if never_expires and expiry_days:
-            # If "never expires" is checked, we don't need expiry_days
-            self.add_error('expiry_days', 'This field should be empty if "Never Expires" is checked.')
-        elif not never_expires and not expiry_days:
+        if not never_expires and not expiry_days:
             # If "never expires" is not checked, we need expiry_days
             self.add_error('expiry_days', 'Please specify expiry days or check "Never Expires".')
             

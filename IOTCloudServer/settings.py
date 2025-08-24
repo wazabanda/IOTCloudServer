@@ -25,12 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-#5tzrs+3&h06_#d#pgb*g^g(i5h(+)o3f*sfiw95&^17^w5ock"
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-#5tzrs+3&h06_#d#pgb*g^g(i5h(+)o3f*sfiw95&^17^w5ock')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 CORS_ORIGIN_ALLOW_ALL = True
 CSRF_TRUSTED_ORIGINS = ['https://iotcloudserver-production.up.railway.app']
 
@@ -106,19 +106,23 @@ ASGI_APPLICATION = 'IOTCloudServer.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Default to SQLite for development, PostgreSQL for production
+# Database configuration
 if os.environ.get('DATABASE_URL'):
-    # Production database configuration (PostgreSQL)
+    # Use DATABASE_URL if provided (e.g. for production)
     import dj_database_url
     DATABASES = {
         'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
     }
 else:
-    # Development database configuration (SQLite)
+    # Use individual database settings (development/docker)
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'iotdb'),
+            'USER': os.environ.get('DB_USER', 'iotuser'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'iotpassword'),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
         }
     }
 
@@ -169,11 +173,30 @@ AUTHENTICATION_BACKENDS = [
 #         },
 #     },
 # }
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    },
-}
+# Redis/Channels configuration
+if os.environ.get('REDIS_URL'):
+    # Use REDIS_URL if provided
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [os.environ.get("REDIS_URL")],
+            },
+        },
+    }
+else:
+    # Use individual Redis settings
+    REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+    REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
+    REDIS_DB = os.environ.get('REDIS_DB', '0')
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"],
+            },
+        },
+    }
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
