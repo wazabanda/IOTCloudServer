@@ -23,3 +23,9 @@ class LocationSerilizer(serializers.ModelSerializer):
     class Meta:
         model = LocationData
         fields = '__all__'
+
+
+class GenericLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GenericLog
+        fields = '__all__'

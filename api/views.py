@@ -97,3 +97,38 @@ class LocationDataAPI(APIView):
             return Response({'Message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'Message': f"Error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GenericLogAPI(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request, uuid):
+        try:
+            device = Device.objects.get(device_id=uuid)
+            logs = GenericLog.objects.filter(device=device)
+            serializer = GenericLogSerializer(logs, many=True)
+            return Response(serializer.data)
+        except Device.DoesNotExist:
+            return Response({'Message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'Message': f"Error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, uuid):
+        try:
+            device = Device.objects.get(device_id=uuid)
+            # Accept any data and store it as JSON
+            log_data = {
+                'device': device.id,
+                'data': request.data
+            }
+            serializer = GenericLogSerializer(data=log_data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({'Message': 'Data logged successfully', 'log': serializer.data}, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Device.DoesNotExist:
+            return Response({'Message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'Message': f"Error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

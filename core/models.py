@@ -144,6 +144,20 @@ class ExpirableToken(models.Model):
     @property
     def is_expired(self):
         return self.expiration_date < timezone.now()
+
+
+class GenericLog(models.Model):
+    class Meta:
+        verbose_name = "Generic Log"
+        verbose_name_plural = "Generic Logs"
+        ordering = ['-date_time']
+    
+    device = models.ForeignKey(Device, verbose_name='Device', on_delete=models.CASCADE)
+    data = models.JSONField("Data", default=dict)
+    date_time = models.DateTimeField("Date and time", auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.device} - {self.date_time}"
     
     
     
