@@ -43,3 +43,7 @@ class MqttBrokerSettingsAdmin(admin.ModelAdmin):
     inlines = [MqttTopicInline]
     list_display = ['name','broker_address','port','username']
     
+    
+@admin.register(GenericLog)
+class GenericLogAdmin(admin.ModelAdmin):
+    list_display = ['device','data','date_time']
