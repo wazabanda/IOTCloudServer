@@ -1,9 +1,9 @@
 from ninja import Router, Schema
 from ninja.errors import HttpError
-from typing import List, Dict
-from core.models import Device, GPIOOutputPin, NumericalLog, LocationData
+from typing import List, Dict, Any
+from core.models import Device, GPIOOutputPin, NumericalLog, LocationData, GenericLog
 from django.shortcuts import get_object_or_404
-from .schema import DeviceSchema, GpioSchema, NumericalLogSchema, LocationDataSchema,NumericalLogOutSchema
+from .schema import DeviceSchema, GpioSchema, NumericalLogSchema, LocationDataSchema, NumericalLogOutSchema, GenericLogSchema
 from datetime import datetime
 
 router = Router(tags=['Device API'])
@@ -71,3 +71,23 @@ def get_pins(request,uuid:str):
     pins = GPIOOutputPin.objects.filter(device=device)
 
     return pins
+
+
+@router.get("/generic-log/{uuid}", auth=None, response=List[GenericLogSchema])
+def get_generic_logs(request, uuid: str):
+    """Get all generic logs for a device"""
+    device = get_object_or_404(Device, device_id=uuid)
+    logs = GenericLog.objects.filter(device=device)
+    return logs
+
+
+@router.post("/generic-log/{uuid}", auth=None)
+def add_generic_log(request, uuid: str, payload: Dict[str, Any]):
+    """Accept and log any JSON data for a device"""
+    device = get_object_or_404(Device, device_id=uuid)
+    log = GenericLog.objects.create(device=device, data=payload)
+    return {
+        "message": "Data logged successfully",
+        "log_id": log.id,
+        "timestamp": log.date_time
+    }

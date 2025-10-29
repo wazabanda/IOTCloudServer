@@ -28,4 +28,10 @@ class GpioSchema(ModelSchema):
 class LocationDataSchema(ModelSchema):
     class Config:
         model = LocationData
+        model_fields = "__all__"
+
+
+class GenericLogSchema(ModelSchema):
+    class Config:
+        model = GenericLog
         model_fields = "__all__" 
